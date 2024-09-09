@@ -46,11 +46,15 @@ export const App: FC = () => {
     const saveData = async () => {
       if (lp.initDataRaw && !isDataSaved) {
         try {
+          console.log('InitDataRaw received:', lp.initDataRaw);
           await saveTelegramUser(lp.initDataRaw);
           setIsDataSaved(true);
+          console.log('User data saved successfully');
         } catch (error) {
           console.error('Error saving user data:', error);
         }
+      } else if (!lp.initDataRaw) {
+        console.warn('initDataRaw is empty or undefined');
       }
     };
 
