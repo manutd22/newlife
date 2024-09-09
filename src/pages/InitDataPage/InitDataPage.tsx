@@ -19,10 +19,10 @@ function getUserRows(user: User): DisplayDataRow[] {
   ];
 }
 
-async function saveTelegramUser(userData: User) {
+async function saveTelegramUser(initData: string) {
   try {
-    console.log('Sending user data to backend:', userData);
-    const response = await axios.post('http://your-backend-url/users/save-telegram-user', userData);
+    console.log('Sending init data to backend:', initData);
+    const response = await axios.post('https://fb70-78-84-19-24.ngrok-free.app/users/save-telegram-user', { initData });
     console.log('User data saved successfully:', response.data);
     return response.data;
   } catch (error) {
@@ -38,13 +38,13 @@ async function saveTelegramUser(userData: User) {
 }
 
 export const InitDataPage: FC = () => {
-  const initDataRaw = useLaunchParams().initDataRaw;
+  const { initDataRaw } = useLaunchParams();
   const initData = useInitData();
 
   useEffect(() => {
-    if (initData && initData.user) {
-      console.log('InitData received:', initData);
-      saveTelegramUser(initData.user)
+    if (initDataRaw) {
+      console.log('InitData received:', initDataRaw);
+      saveTelegramUser(initDataRaw)
         .then(() => console.log('User data saved successfully'))
         .catch((error: unknown) => {
           if (error instanceof AxiosError) {
@@ -56,7 +56,7 @@ export const InitDataPage: FC = () => {
           }
         });
     }
-  }, [initData]);
+  }, [initDataRaw]);
 
 
   const initDataRows = useMemo<DisplayDataRow[] | undefined>(() => {
