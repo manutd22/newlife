@@ -1,5 +1,6 @@
 import { FC } from 'react';
 import { Link } from '@/components/Link/Link';
+import { AiOutlineHome, AiOutlineTrophy, AiOutlineUser } from 'react-icons/ai';
 
 export const NavigationBar: FC = () => {
   return (
@@ -14,9 +15,18 @@ export const NavigationBar: FC = () => {
       background: '#f0f0f0',
       borderTop: '1px solid #ccc'
     }}>
-      <Link to="/">Home</Link>
-      <Link to="/leaderboard">Leaderboard</Link>
-      <Link to="/friends">Friends</Link>
+      <Link to="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <AiOutlineHome size={24} />
+        <span>Home</span>
+      </Link>
+      <Link to="/leaderboard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <AiOutlineTrophy size={24} />
+        <span>Leaderboard</span>
+      </Link>
+      <Link to="/friends" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <AiOutlineUser size={24} />
+        <span>Friends</span>
+      </Link>
     </div>
   );
 };

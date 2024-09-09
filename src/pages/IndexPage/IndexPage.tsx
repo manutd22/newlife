@@ -12,7 +12,7 @@ export const IndexPage: FC = () => {
 
   return (
     <div style={{ padding: '20px', textAlign: 'center', paddingBottom: '60px' }}>
-      <h2>Total BallCry: {/* Здесь должна быть логика подсчета общего количества монет */}</h2>
+      <h2>BallCry: {/* Здесь должна быть логика подсчета общего количества монет */}</h2>
       
       {wallet ? (
         <div style={{ 
