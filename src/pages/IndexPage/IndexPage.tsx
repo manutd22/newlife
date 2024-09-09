@@ -2,6 +2,8 @@ import { Button, Image } from '@telegram-apps/telegram-ui';
 import type { FC } from 'react';
 import { Link } from '@/components/Link/Link';
 import { useTonWallet } from '@tonconnect/ui-react';
+import { QuestsComponent } from '@/components/QuestsComponent/QuestsComponent';
+import { NavigationBar } from '@/components/NavigationBar/NavigationBar';
 
 import ball1 from '../../../assets/ball1.png';
 
@@ -9,7 +11,7 @@ export const IndexPage: FC = () => {
   const wallet = useTonWallet();
 
   return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
+    <div style={{ padding: '20px', textAlign: 'center', paddingBottom: '60px' }}>
       <h2>Total BallCry: {/* Здесь должна быть логика подсчета общего количества монет */}</h2>
       
       {wallet ? (
@@ -32,9 +34,8 @@ export const IndexPage: FC = () => {
         <Image src={ball1} alt="BallCry" style={{ width: '100px', height: '100px' }} />
       </div>
 
-      <Link to="/quests">
-        <Button>Go to Quests</Button>
-      </Link>
+      <QuestsComponent />
+      <NavigationBar />
     </div>
   );
 };
