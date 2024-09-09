@@ -3,14 +3,14 @@ import {
   bindMiniAppCSSVars,
   bindThemeParamsCSSVars,
   bindViewportCSSVars,
-  initNavigator, useLaunchParams,
+  initNavigator,
+  useLaunchParams,
   useMiniApp,
   useThemeParams,
   useViewport,
-  useInitData,
 } from '@telegram-apps/sdk-react';
 import { AppRoot } from '@telegram-apps/telegram-ui';
-import { type FC, useEffect, useMemo } from 'react';
+import { type FC, useEffect, useMemo, useState } from 'react';
 import {
   Navigate,
   Route,
@@ -21,10 +21,12 @@ import axios from 'axios';
 
 import { routes } from '@/navigation/routes.tsx';
 
+const BACKEND_URL = 'https://fb70-78-84-19-24.ngrok-free.app'; // Замените на ваш актуальный URL
+
 const saveTelegramUser = async (initData: string) => {
   console.log('Attempting to save user data:', initData);
   try {
-    const response = await axios.post('https://fb70-78-84-19-24.ngrok-free.app/users/save-telegram-user', { initData });
+    const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, { initData });
     console.log('User data saved successfully:', response.data);
     return response.data;
   } catch (error) {
@@ -38,7 +40,22 @@ export const App: FC = () => {
   const miniApp = useMiniApp();
   const themeParams = useThemeParams();
   const viewport = useViewport();
-  const initData = useInitData();
+  const [isDataSaved, setIsDataSaved] = useState(false);
+
+  useEffect(() => {
+    const saveData = async () => {
+      if (lp.initDataRaw && !isDataSaved) {
+        try {
+          await saveTelegramUser(lp.initDataRaw);
+          setIsDataSaved(true);
+        } catch (error) {
+          console.error('Error saving user data:', error);
+        }
+      }
+    };
+
+    saveData();
+  }, [lp.initDataRaw, isDataSaved]);
 
   useEffect(() => {
     return bindMiniAppCSSVars(miniApp, themeParams);
@@ -52,25 +69,9 @@ export const App: FC = () => {
     return viewport && bindViewportCSSVars(viewport);
   }, [viewport]);
 
-  useEffect(() => {
-    if (initData) {
-      const initDataString = JSON.stringify(initData);
-      console.log('InitData received:', initDataString);
-      saveTelegramUser(initDataString)
-        .then(() => console.log('User data saved successfully'))
-        .catch((error) => console.error('Error saving user data:', error));
-    } else {
-      console.warn('InitData is empty or undefined');
-    }
-  }, [initData]);
-
-  // Create a new application navigator and attach it to the browser history, so it could modify
-  // it and listen to its changes.
   const navigator = useMemo(() => initNavigator('app-navigation-state'), []);
   const [location, reactNavigator] = useIntegration(navigator);
 
-  // Don't forget to attach the navigator to allow it to control the BackButton state as well
-  // as browser history.
   useEffect(() => {
     navigator.attach();
     return () => navigator.detach();
