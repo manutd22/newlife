@@ -1,9 +1,9 @@
 import { type FC, useMemo, useEffect } from 'react';
 import { useInitData, useLaunchParams, type User } from '@telegram-apps/sdk-react';
 import { List, Placeholder } from '@telegram-apps/telegram-ui';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
-import { DisplayData, type DisplayDataRow } from '@/components/DisplayData/DisplayData.tsx';
+import { DisplayData, type DisplayDataRow } from '@/components/DisplayData/DisplayData';
 
 function getUserRows(user: User): DisplayDataRow[] {
   return [
@@ -11,22 +11,22 @@ function getUserRows(user: User): DisplayDataRow[] {
     { title: 'username', value: user.username },
     { title: 'last_name', value: user.lastName },
     { title: 'first_name', value: user.firstName },
-    { title: 'is_bot', value: user.isBot },
-    { title: 'is_premium', value: user.isPremium },
+    { title: 'is_bot', value: user.isBot ? 'true' : 'false' },
+    { title: 'is_premium', value: user.isPremium ? 'true' : 'false' },
     { title: 'language_code', value: user.languageCode },
-    { title: 'allows_to_write_to_pm', value: user.allowsWriteToPm },
-    { title: 'added_to_attachment_menu', value: user.addedToAttachmentMenu },
+    { title: 'allows_to_write_to_pm', value: user.allowsWriteToPm ? 'true' : 'false' },
+    { title: 'added_to_attachment_menu', value: user.addedToAttachmentMenu ? 'true' : 'false' },
   ];
 }
 
 async function saveTelegramUser(initData: string) {
+  console.log('Attempting to save user data:', initData);
   try {
-    console.log('Sending init data to backend:', initData);
-    const response = await axios.post('https://fb70-78-84-19-24.ngrok-free.app/users/save-telegram-user', { initData });
+    const response = await axios.post('https://your-ngrok-url.ngrok-free.app/users/save-telegram-user', { initData });
     console.log('User data saved successfully:', response.data);
     return response.data;
   } catch (error) {
-    if (error instanceof AxiosError) {
+    if (axios.isAxiosError(error)) {
       console.error('Axios error:', error.message);
       console.error('Response data:', error.response?.data);
       console.error('Response status:', error.response?.status);
@@ -46,22 +46,17 @@ export const InitDataPage: FC = () => {
       console.log('InitData received:', initDataRaw);
       saveTelegramUser(initDataRaw)
         .then(() => console.log('User data saved successfully'))
-        .catch((error: unknown) => {
-          if (error instanceof AxiosError) {
-            console.error('Failed to save user data (Axios error):', error.message);
-          } else if (error instanceof Error) {
-            console.error('Failed to save user data:', error.message);
-          } else {
-            console.error('Failed to save user data:', error);
-          }
+        .catch((error) => {
+          console.error('Failed to save user data:', error);
         });
+    } else {
+      console.warn('No initDataRaw available');
     }
   }, [initDataRaw]);
 
-
   const initDataRows = useMemo<DisplayDataRow[] | undefined>(() => {
     if (!initData || !initDataRaw) {
-      return;
+      return undefined;
     }
     const {
       hash,
@@ -76,14 +71,14 @@ export const InitDataPage: FC = () => {
     return [
       { title: 'raw', value: initDataRaw },
       { title: 'auth_date', value: authDate.toLocaleString() },
-      { title: 'auth_date (raw)', value: authDate.getTime() / 1000 },
+      { title: 'auth_date (raw)', value: (authDate.getTime() / 1000).toString() },
       { title: 'hash', value: hash },
-      { title: 'can_send_after', value: canSendAfterDate?.toISOString() },
-      { title: 'can_send_after (raw)', value: canSendAfter },
-      { title: 'query_id', value: queryId },
-      { title: 'start_param', value: startParam },
-      { title: 'chat_type', value: chatType },
-      { title: 'chat_instance', value: chatInstance },
+      { title: 'can_send_after', value: canSendAfterDate?.toISOString() || 'N/A' },
+      { title: 'can_send_after (raw)', value: canSendAfter?.toString() || 'N/A' },
+      { title: 'query_id', value: queryId || 'N/A' },
+      { title: 'start_param', value: startParam || 'N/A' },
+      { title: 'chat_type', value: chatType || 'N/A' },
+      { title: 'chat_instance', value: chatInstance || 'N/A' },
     ];
   }, [initData, initDataRaw]);
 
@@ -97,7 +92,7 @@ export const InitDataPage: FC = () => {
 
   const chatRows = useMemo<DisplayDataRow[] | undefined>(() => {
     if (!initData?.chat) {
-      return;
+      return undefined;
     }
     const { id, title, type, username, photoUrl } = initData.chat;
 
@@ -105,8 +100,8 @@ export const InitDataPage: FC = () => {
       { title: 'id', value: id.toString() },
       { title: 'title', value: title },
       { title: 'type', value: type },
-      { title: 'username', value: username },
-      { title: 'photo_url', value: photoUrl },
+      { title: 'username', value: username || 'N/A' },
+      { title: 'photo_url', value: photoUrl || 'N/A' },
     ];
   }, [initData]);
 
@@ -124,6 +119,7 @@ export const InitDataPage: FC = () => {
       </Placeholder>
     );
   }
+
   return (
     <List>
       <DisplayData header={'Init Data'} rows={initDataRows}/>
