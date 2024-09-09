@@ -22,7 +22,7 @@ function getUserRows(user: User): DisplayDataRow[] {
 async function saveTelegramUser(initData: string) {
   console.log('Attempting to save user data:', initData);
   try {
-    const response = await axios.post('https://your-ngrok-url.ngrok-free.app/users/save-telegram-user', { initData });
+    const response = await axios.post('https://fb70-78-84-19-24.ngrok-free.app/users/save-telegram-user', { initData });
     console.log('User data saved successfully:', response.data);
     return response.data;
   } catch (error) {
