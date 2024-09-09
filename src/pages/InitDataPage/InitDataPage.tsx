@@ -1,7 +1,7 @@
 import { type FC, useMemo, useEffect } from 'react';
 import { useInitData, useLaunchParams, type User } from '@telegram-apps/sdk-react';
 import { List, Placeholder } from '@telegram-apps/telegram-ui';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 import { DisplayData, type DisplayDataRow } from '@/components/DisplayData/DisplayData.tsx';
 
@@ -22,14 +22,16 @@ function getUserRows(user: User): DisplayDataRow[] {
 async function saveTelegramUser(userData: User) {
   try {
     console.log('Sending user data to backend:', userData);
-    const response = await axios.post('https://fb70-78-84-19-24.ngrok-free.app/users/save-telegram-user', userData);
+    const response = await axios.post('http://your-backend-url/users/save-telegram-user', userData);
     console.log('User data saved successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error saving user data:', error);
-    if (axios.isAxiosError(error)) {
+    if (error instanceof AxiosError) {
+      console.error('Axios error:', error.message);
       console.error('Response data:', error.response?.data);
       console.error('Response status:', error.response?.status);
+    } else {
+      console.error('Unexpected error:', error);
     }
     throw error;
   }
@@ -44,7 +46,15 @@ export const InitDataPage: FC = () => {
       console.log('InitData received:', initData);
       saveTelegramUser(initData.user)
         .then(() => console.log('User data saved successfully'))
-        .catch(error => console.error('Failed to save user data:', error));
+        .catch((error: unknown) => {
+          if (error instanceof AxiosError) {
+            console.error('Failed to save user data (Axios error):', error.message);
+          } else if (error instanceof Error) {
+            console.error('Failed to save user data:', error.message);
+          } else {
+            console.error('Failed to save user data:', error);
+          }
+        });
     }
   }, [initData]);
 
