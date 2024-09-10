@@ -1,7 +1,7 @@
 import { FC, useState, useEffect } from 'react';
 import { Button, Image } from '@telegram-apps/telegram-ui';
 import { NavigationBar } from '@/components/NavigationBar/NavigationBar';
-import { initUtils } from '@telegram-apps/sdk-react';
+import { initUtils, useLaunchParams } from '@telegram-apps/sdk-react';
 
 import ball1 from '../../../assets/ball1.png';
 
@@ -14,6 +14,7 @@ const utils = initUtils();
 
 export const FriendsPage: FC = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
+  const lp = useLaunchParams();
   
   useEffect(() => {
     // Здесь должна быть логика загрузки списка друзей
@@ -28,9 +29,15 @@ export const FriendsPage: FC = () => {
   const shareInviteLink = () => {
     const botUsername = 'testonefornew'; // Замените на имя вашего бота
     const appName = 'BallCry'; // Замените на название вашего приложения
-    const startParam = `invite_${Date.now()}`;
-    const inviteLink = `https://t.me/${botUsername}/${appName}?startapp=${startParam}`;
-    utils.shareURL(inviteLink, 'Join me in BallCry and get more rewards!');
+    
+    if (lp.initData?.user?.id) {
+      const userId = lp.initData.user.id;
+      const inviteLink = `https://t.me/${botUsername}/${appName}?startapp=invite_${userId}`;
+      utils.shareURL(inviteLink, 'Join me in BallCry and get more rewards!');
+    } else {
+      console.error('User ID not available');
+      // Можно показать сообщение пользователю о невозможности создать ссылку
+    }
   };
 
   return (

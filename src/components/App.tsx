@@ -35,14 +35,14 @@ const saveTelegramUser = async (initData: string) => {
   }
 };
 
-const handleStartAppParam = async (startApp: string) => {
-  console.log('Handling startapp parameter:', startApp);
+const handleReferral = async (referrerId: string, userId: string) => {
+  console.log('Handling referral:', { referrerId, userId });
   try {
-    const response = await axios.post(`${BACKEND_URL}/handle-invite`, { startApp });
-    console.log('Invite handled successfully:', response.data);
+    const response = await axios.post(`${BACKEND_URL}/handle-referral`, { referrerId, userId });
+    console.log('Referral handled successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Failed to handle invite:', error);
+    console.error('Failed to handle referral:', error);
     throw error;
   }
 };
@@ -53,7 +53,7 @@ export const App: FC = () => {
   const themeParams = useThemeParams();
   const viewport = useViewport();
   const [isDataSaved, setIsDataSaved] = useState(false);
-  const [isInviteHandled, setIsInviteHandled] = useState(false);
+  const [isReferralHandled, setIsReferralHandled] = useState(false);
 
   useEffect(() => {
     const saveData = async () => {
@@ -75,21 +75,25 @@ export const App: FC = () => {
   }, [lp.initDataRaw, isDataSaved]);
 
   useEffect(() => {
-    const handleInvite = async () => {
-      if (lp.startParam && !isInviteHandled) {
-        try {
-          console.log('StartParam received:', lp.startParam);
-          await handleStartAppParam(lp.startParam);
-          setIsInviteHandled(true);
-          console.log('Invite handled successfully');
-        } catch (error) {
-          console.error('Error handling invite:', error);
+    const processReferral = async () => {
+      if (lp.startParam && lp.initData?.user?.id && !isReferralHandled) {
+        const referralMatch = lp.startParam.match(/^invite_(\d+)$/);
+        if (referralMatch) {
+          const referrerId = referralMatch[1];
+          const userId = lp.initData.user.id.toString();
+          try {
+            await handleReferral(referrerId, userId);
+            setIsReferralHandled(true);
+            console.log('Referral processed successfully');
+          } catch (error) {
+            console.error('Error processing referral:', error);
+          }
         }
       }
     };
 
-    handleInvite();
-  }, [lp.startParam, isInviteHandled]);
+    processReferral();
+  }, [lp.startParam, lp.initData, isReferralHandled]);
 
   useEffect(() => {
     return bindMiniAppCSSVars(miniApp, themeParams);
