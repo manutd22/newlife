@@ -15,7 +15,6 @@ const utils = initUtils();
 export const FriendsPage: FC = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
   
-
   useEffect(() => {
     // Здесь должна быть логика загрузки списка друзей
     // Для примера используем моковые данные
@@ -28,8 +27,9 @@ export const FriendsPage: FC = () => {
 
   const shareInviteLink = () => {
     const botUsername = 'testonefornew'; // Замените на имя вашего бота
+    const appName = 'BallCry'; // Замените на название вашего приложения
     const startParam = `invite_${Date.now()}`;
-    const inviteLink = `https://t.me/${botUsername}?start=${startParam}`;
+    const inviteLink = `https://t.me/${botUsername}/${appName}?startapp=${startParam}`;
     utils.shareURL(inviteLink, 'Join me in BallCry and get more rewards!');
   };
 

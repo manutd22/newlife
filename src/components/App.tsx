@@ -35,12 +35,25 @@ const saveTelegramUser = async (initData: string) => {
   }
 };
 
+const handleStartAppParam = async (startApp: string) => {
+  console.log('Handling startapp parameter:', startApp);
+  try {
+    const response = await axios.post(`${BACKEND_URL}/handle-invite`, { startApp });
+    console.log('Invite handled successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to handle invite:', error);
+    throw error;
+  }
+};
+
 export const App: FC = () => {
   const lp = useLaunchParams();
   const miniApp = useMiniApp();
   const themeParams = useThemeParams();
   const viewport = useViewport();
   const [isDataSaved, setIsDataSaved] = useState(false);
+  const [isInviteHandled, setIsInviteHandled] = useState(false);
 
   useEffect(() => {
     const saveData = async () => {
@@ -60,6 +73,23 @@ export const App: FC = () => {
 
     saveData();
   }, [lp.initDataRaw, isDataSaved]);
+
+  useEffect(() => {
+    const handleInvite = async () => {
+      if (lp.startParam && !isInviteHandled) {
+        try {
+          console.log('StartParam received:', lp.startParam);
+          await handleStartAppParam(lp.startParam);
+          setIsInviteHandled(true);
+          console.log('Invite handled successfully');
+        } catch (error) {
+          console.error('Error handling invite:', error);
+        }
+      }
+    };
+
+    handleInvite();
+  }, [lp.startParam, isInviteHandled]);
 
   useEffect(() => {
     return bindMiniAppCSSVars(miniApp, themeParams);
