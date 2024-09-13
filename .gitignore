@@ -1,5 +1,5 @@
 # Logs
-/reactback
+/reactback/
 logs
 *.log
 npm-debug.log*

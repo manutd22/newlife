@@ -10,39 +10,33 @@ import {
   useViewport,
 } from '@telegram-apps/sdk-react';
 import { AppRoot } from '@telegram-apps/telegram-ui';
-import { type FC, useEffect, useMemo, useState } from 'react';
-import {
-  Navigate,
-  Route,
-  Router,
-  Routes,
-} from 'react-router-dom';
+import { FC, useEffect, useMemo, useState, useCallback } from 'react';
+import { Navigate, Route, Router, Routes } from 'react-router-dom';
 import axios from 'axios';
+import { BalanceProvider } from '../contexts/balanceContext';
 
 import { routes } from '@/navigation/routes.tsx';
 
-const BACKEND_URL = 'https://20b3-78-84-19-24.ngrok-free.app'; // Замените на ваш актуальный URL
+const BACKEND_URL = 'https://a3d937c07fa20a6e57a314e230443dd7.serveo.net';
 
-const saveTelegramUser = async (initData: string) => {
-  console.log('Attempting to save user data:', initData);
+const saveTelegramUser = async (initData: string, startParam: string | undefined | null) => {
+  console.log('Attempting to save user data:');
+  console.log('initData:', initData); // Логируем initData
+  console.log('start_param before sending:', startParam); // Логируем startParam до отправки запроса
+
   try {
-    const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, { initData });
-    console.log('User data saved successfully:', response.data);
+    const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, { 
+      initData, 
+      startParam: startParam || null 
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
     return response.data;
   } catch (error) {
     console.error('Failed to save user data:', error);
-    throw error;
-  }
-};
-
-const handleReferral = async (referrerId: string, userId: string) => {
-  console.log('Handling referral:', { referrerId, userId });
-  try {
-    const response = await axios.post(`${BACKEND_URL}/handle-referral`, { referrerId, userId });
-    console.log('Referral handled successfully:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Failed to handle referral:', error);
     throw error;
   }
 };
@@ -53,47 +47,39 @@ export const App: FC = () => {
   const themeParams = useThemeParams();
   const viewport = useViewport();
   const [isDataSaved, setIsDataSaved] = useState(false);
-  const [isReferralHandled, setIsReferralHandled] = useState(false);
+
+  const saveUserData = useCallback(async () => {
+    if (lp.initDataRaw && !isDataSaved) {
+      try {
+        console.log('Launch params:', lp);
+        console.log('startParam from launch params:', lp.startParam);
+        console.log('startParam from WebApp:', window.Telegram?.WebApp?.initDataUnsafe?.start_param);
+        
+        // Пробуем получить параметр startParam
+        const start_param = lp.startParam || window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+
+        // Добавляем лог для проверки, определён ли startParam
+        if (start_param) {
+          console.log('Final startParam used:', start_param);
+        } else {
+          console.warn('No valid startParam found');
+        }
+
+        // Сохраняем данные пользователя
+        await saveTelegramUser(lp.initDataRaw, start_param);
+        setIsDataSaved(true);
+        console.log('User data saved successfully');
+      } catch (error) {
+        console.error('Error saving user data:', error);
+      }
+    } else if (!lp.initDataRaw) {
+      console.warn('initDataRaw is empty or undefined');
+    }
+  }, [lp, isDataSaved]);
 
   useEffect(() => {
-    const saveData = async () => {
-      if (lp.initDataRaw && !isDataSaved) {
-        try {
-          console.log('InitDataRaw received:', lp.initDataRaw);
-          await saveTelegramUser(lp.initDataRaw);
-          setIsDataSaved(true);
-          console.log('User data saved successfully');
-        } catch (error) {
-          console.error('Error saving user data:', error);
-        }
-      } else if (!lp.initDataRaw) {
-        console.warn('initDataRaw is empty or undefined');
-      }
-    };
-
-    saveData();
-  }, [lp.initDataRaw, isDataSaved]);
-
-  useEffect(() => {
-    const processReferral = async () => {
-      if (lp.startParam && lp.initData?.user?.id && !isReferralHandled) {
-        const referralMatch = lp.startParam.match(/^invite_(\d+)$/);
-        if (referralMatch) {
-          const referrerId = referralMatch[1];
-          const userId = lp.initData.user.id.toString();
-          try {
-            await handleReferral(referrerId, userId);
-            setIsReferralHandled(true);
-            console.log('Referral processed successfully');
-          } catch (error) {
-            console.error('Error processing referral:', error);
-          }
-        }
-      }
-    };
-
-    processReferral();
-  }, [lp.startParam, lp.initData, isReferralHandled]);
+    saveUserData();
+  }, [saveUserData]);
 
   useEffect(() => {
     return bindMiniAppCSSVars(miniApp, themeParams);
@@ -116,16 +102,18 @@ export const App: FC = () => {
   }, [navigator]);
 
   return (
-    <AppRoot
-      appearance={miniApp.isDark ? 'dark' : 'light'}
-      platform={['macos', 'ios'].includes(lp.platform) ? 'ios' : 'base'}
-    >
-      <Router location={location} navigator={reactNavigator}>
-        <Routes>
-          {routes.map((route) => <Route key={route.path} {...route} />)}
-          <Route path='*' element={<Navigate to='/'/>}/>
-        </Routes>
-      </Router>
-    </AppRoot>
+    <BalanceProvider>
+      <AppRoot
+        appearance={miniApp.isDark ? 'dark' : 'light'}
+        platform={['macos', 'ios'].includes(lp.platform) ? 'ios' : 'base'}
+      >
+        <Router location={location} navigator={reactNavigator}>
+          <Routes>
+            {routes.map((route) => <Route key={route.path} {...route} />)}
+            <Route path='*' element={<Navigate to='/'/>}/>
+          </Routes>
+        </Router>
+      </AppRoot>
+    </BalanceProvider>
   );
 };

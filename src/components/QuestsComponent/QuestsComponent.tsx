@@ -1,40 +1,94 @@
-import { useState, FC } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Button } from '@telegram-apps/telegram-ui';
 import { DisplayData, DisplayDataRow } from '@/components/DisplayData/DisplayData';
+import { useBalance } from '../../contexts/balanceContext';
+
+enum QuestType {
+  CHANNEL_SUBSCRIPTION = 'CHANNEL_SUBSCRIPTION',
+  DAILY_BONUS = 'DAILY_BONUS',
+  INVITE_FRIENDS = 'INVITE_FRIENDS',
+  CONNECT_WALLET = 'CONNECT_WALLET',
+  POST_INSTAGRAM = 'POST_INSTAGRAM',
+  SUBSCRIBE_X = 'SUBSCRIBE_X',
+  TON_TRANSACTION = 'TON_TRANSACTION',
+}
 
 interface Quest {
   id: number;
   title: string;
   reward: number;
-  completed: boolean;
+  type: QuestType;
 }
 
-export const QuestsComponent: FC = () => {
-  const [quests, setQuests] = useState<Quest[]>([
-    { id: 1, title: "Подпишись на официальный канал телеграм", reward: 200, completed: false },
-    { id: 2, title: "Ежедневный бонус", reward: 100, completed: false },
-    { id: 3, title: "Пригласи 5 друзей", reward: 800, completed: false },
-    { id: 4, title: "Подключи кошелёк", reward: 150, completed: false },
-    { id: 5, title: "Выставь историю в инстаграм со своим любимым клубом и хештегом BallCry", reward: 300, completed: false },
-    { id: 6, title: "Подпишись на канал в X", reward: 100, completed: false },
-    { id: 7, title: "Соверши транзакцию Ton", reward: 250, completed: false },
-  ]);
+const BACKEND_URL = 'https://0167a0aa6b3709c580485f8e4fe276b1.serveo.net';
 
-  const handleQuestCompletion = (questId: number) => {
-    setQuests(quests.map(quest => 
-      quest.id === questId ? { ...quest, completed: true } : quest
-    ));
+export const QuestsComponent: React.FC = () => {
+  const [quests, setQuests] = useState<Quest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { addToBalance } = useBalance();
+
+  useEffect(() => {
+    fetchQuests();
+  }, []);
+
+  const fetchQuests = async () => {
+    try {
+      setLoading(true);
+      const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      const response = await axios.get(`${BACKEND_URL}/quests/incomplete`, {
+        params: { userId }
+      });
+      setQuests(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Ошибка при загрузке квестов:", error);
+      setError("Не удалось загрузить квесты. Пожалуйста, попробуйте позже.");
+      setLoading(false);
+    }
   };
+
+  const handleQuestCompletion = async (quest: Quest) => {
+    try {
+      const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      
+      if (quest.type === QuestType.CHANNEL_SUBSCRIPTION) {
+        const subscriptionCheck = await axios.get(`${BACKEND_URL}/quests/check-subscription`, {
+          params: { userId }
+        });
+        if (!subscriptionCheck.data.isSubscribed) {
+          alert("Пожалуйста, подпишитесь на канал, чтобы выполнить этот квест.");
+          return;
+        }
+      }
+      
+      const response = await axios.post(`${BACKEND_URL}/quests/complete`, {
+        userId,
+        questId: quest.id
+      });
+
+      if (response.data.success) {
+        addToBalance(quest.reward);
+        setQuests(quests.filter(q => q.id !== quest.id));
+      } else {
+        throw new Error(response.data.message || 'Не удалось выполнить квест');
+      }
+    } catch (error) {
+      console.error("Ошибка при выполнении квеста:", error);
+      alert("Произошла ошибка при выполнении квеста. Пожалуйста, попробуйте позже.");
+    }
+  };
+
+  if (loading) return <div>Загрузка квестов...</div>;
+  if (error) return <div>{error}</div>;
 
   const questRows: DisplayDataRow[] = quests.map(quest => ({
     title: quest.title,
     value: (
       <>
         <span>Reward: {quest.reward} BallCry</span>
-        {quest.completed ? 
-          <span style={{ color: 'green', marginLeft: '10px' }}>Completed</span> : 
-          <Button onClick={() => handleQuestCompletion(quest.id)} style={{ marginLeft: '10px' }}>Complete</Button>
-        }
+        <Button onClick={() => handleQuestCompletion(quest)} style={{ marginLeft: '10px' }}>Complete</Button>
       </>
     )
   }));

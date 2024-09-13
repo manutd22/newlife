@@ -1,44 +1,127 @@
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, useCallback } from 'react';
 import { Button, Image } from '@telegram-apps/telegram-ui';
 import { NavigationBar } from '@/components/NavigationBar/NavigationBar';
 import { initUtils, useLaunchParams } from '@telegram-apps/sdk-react';
+import axios from 'axios';
 
 import ball1 from '../../../assets/ball1.png';
 
-interface Friend {
-  id: number;
-  name: string;
+interface Referral {
+  id?: number;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 const utils = initUtils();
+const BACKEND_URL = 'https://0167a0aa6b3709c580485f8e4fe276b1.serveo.net';
+const BOT_USERNAME = 'testonefornew_bot'; // Замените на имя вашего бота
 
 export const FriendsPage: FC = () => {
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const lp = useLaunchParams();
-  
-  useEffect(() => {
-    // Здесь должна быть логика загрузки списка друзей
-    // Для примера используем моковые данные
-    setFriends([
-      { id: 1, name: 'Друг 1' },
-      { id: 2, name: 'Друг 2' },
-      { id: 3, name: 'Друг 3' },
-    ]);
+
+  const showPopup = useCallback((title: string, message: string) => {
+    if (window.Telegram?.WebApp?.showPopup) {
+      window.Telegram.WebApp.showPopup({
+        title,
+        message,
+        buttons: [{ type: 'ok' }]
+      });
+    } else {
+      console.warn('Telegram WebApp API is not available');
+      alert(`${title}: ${message}`);
+    }
   }, []);
 
-  const shareInviteLink = () => {
-    const botUsername = 'testonefornew'; // Замените на имя вашего бота
-    const appName = 'BallCry'; // Замените на название вашего приложения
-    
-    if (lp.initData?.user?.id) {
-      const userId = lp.initData.user.id;
-      const inviteLink = `https://t.me/${botUsername}/${appName}?startapp=invite_${userId}`;
+  const fetchReferrals = useCallback(async () => {
+    console.log('Fetching referrals...');
+    if (!lp.initData?.user?.id) {
+      console.warn('User ID not available');
+      showPopup('Error', 'User ID not available');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`${BACKEND_URL}/users/${lp.initData.user.id}/referrals`, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      console.log('Referrals response:', response);
+
+      if (Array.isArray(response.data)) {
+        setReferrals(response.data);
+      } else {
+        console.error('Unexpected response format:', response.data);
+        showPopup('Error', 'Unexpected data format received');
+      }
+    } catch (err) {
+      console.error('Error fetching referrals:', err);
+      showPopup('Error', 'Failed to load referrals. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [lp.initData?.user?.id, showPopup]);
+
+  useEffect(() => {
+    fetchReferrals();
+  }, [fetchReferrals]);
+
+  const generateInviteLink = useCallback(() => {
+    if (!lp.initData?.user?.id) {
+      console.error('User ID not available');
+      return null;
+    }
+    return `https://t.me/${BOT_USERNAME}?startapp=invite_${lp.initData.user.id}`;
+  }, [lp.initData?.user?.id]);
+
+  const shareInviteLink = useCallback(() => {
+    const inviteLink = generateInviteLink();
+    if (inviteLink) {
+      console.log('Generated invite link:', inviteLink);
       utils.shareURL(inviteLink, 'Join me in BallCry and get more rewards!');
     } else {
-      console.error('User ID not available');
-      // Можно показать сообщение пользователю о невозможности создать ссылку
+      showPopup('Error', 'Unable to create invite link. Please try again later.');
     }
-  };
+  }, [generateInviteLink, showPopup]);
+
+  const copyInviteLink = useCallback(() => {
+    const inviteLink = generateInviteLink();
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink)
+        .then(() => {
+          showPopup('Success', 'Invite link copied to clipboard!');
+        })
+        .catch(() => {
+          showPopup('Error', 'Failed to copy invite link. Please try again.');
+        });
+    } else {
+      showPopup('Error', 'Unable to create invite link. Please try again later.');
+    }
+  }, [generateInviteLink, showPopup]);
+
+  const renderReferralsList = useCallback(() => {
+    if (referrals.length === 0) {
+      return <p>No referrals yet. Invite your friends!</p>;
+    }
+    
+    return (
+      <ol style={{ textAlign: 'left', paddingLeft: '20px' }}>
+        {referrals.map((referral, index) => (
+          <li key={referral.id || index}>
+            {referral.firstName || ''} {referral.lastName || ''} 
+            {referral.username ? `(@${referral.username})` : ''}
+          </li>
+        ))}
+      </ol>
+    );
+  }, [referrals]);
+
+  console.log('Rendering FriendsPage. State:', { isLoading, referralsLength: referrals.length });
 
   return (
     <div style={{ padding: '20px', textAlign: 'center', paddingBottom: '60px' }}>
@@ -48,19 +131,22 @@ export const FriendsPage: FC = () => {
         <Image src={ball1} alt="BallCry" style={{ width: '100px', height: '100px', margin: '0 auto' }} />
       </div>
 
-      <Button onClick={shareInviteLink} style={{ marginBottom: '20px' }}>Invite Friends</Button>
+      <Button onClick={shareInviteLink} style={{ marginBottom: '10px' }}>Share Invite Link</Button>
+      <Button onClick={copyInviteLink} style={{ marginBottom: '20px' }}>Copy Invite Link</Button>
 
       <div style={{ marginBottom: '20px' }}>
-        <h3>{friends.length} Friends</h3>
+        <h3>{referrals.length} Friends</h3>
       </div>
 
-      <ol style={{ textAlign: 'left', paddingLeft: '20px' }}>
-        {friends.map(friend => (
-          <li key={friend.id}>{friend.name}</li>
-        ))}
-      </ol>
+      {isLoading ? (
+        <p>Loading referrals...</p>
+      ) : (
+        renderReferralsList()
+      )}
 
       <NavigationBar />
     </div>
   );
 };
+
+export default FriendsPage;
