@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "homepage": "https://simi129.github.io/reactj/",
+  "homepage": "https://manutd22.github.io/newlife/",
   "scripts": {
     "deploy": "gh-pages -d dist",
     "dev": "vite",
