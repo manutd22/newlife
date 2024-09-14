@@ -20,6 +20,7 @@ const BOT_USERNAME = 'testonefornew_bot';
 export const FriendsPage: FC = () => {
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const lp = useLaunchParams();
 
   const showPopup = useCallback((title: string, message: string) => {
@@ -35,17 +36,21 @@ export const FriendsPage: FC = () => {
     }
   }, []);
 
-  const saveTempReferral = useCallback(async (tempUserId: string, referrerId: string) => {
-    try {
-      await axios.post(`${BACKEND_URL}/users/save-temp-referral`, {
-        tempUserId,
-        referrerId
-      });
-      console.log('Temporary referral saved');
-    } catch (err) {
-      console.error('Error saving temporary referral:', err);
+  const generateReferralCode = useCallback(async () => {
+    if (!lp.initData?.user?.id) {
+      console.warn('User ID not available');
+      return;
     }
-  }, []);
+
+    try {
+      const response = await axios.post(`${BACKEND_URL}/users/generate-referral-code`, {
+        userId: lp.initData.user.id
+      });
+      setReferralCode(response.data.code);
+    } catch (err) {
+      console.error('Error generating referral code:', err);
+    }
+  }, [lp.initData?.user?.id]);
 
   const initializeUser = useCallback(async () => {
     if (!lp.initData) {
@@ -53,11 +58,15 @@ export const FriendsPage: FC = () => {
       return;
     }
 
+    const storedReferralCode = localStorage.getItem('referralCode');
+    
     try {
       const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, {
-        initData: lp.initData
+        initData: lp.initData,
+        referralCode: storedReferralCode
       });
       console.log('User initialized:', response.data);
+      localStorage.removeItem('referralCode');
     } catch (err) {
       console.error('Error initializing user:', err);
     }
@@ -97,26 +106,28 @@ export const FriendsPage: FC = () => {
 
   useEffect(() => {
     const initApp = async () => {
-      if (lp.startParam && lp.startParam.startsWith('invite_')) {
-        const referrerId = lp.startParam.split('_')[1];
-        const tempUserId = lp.initData?.user?.id?.toString() || 'unknown';
-        await saveTempReferral(tempUserId, referrerId);
-      }
-      
       await initializeUser();
+      await generateReferralCode();
       fetchReferrals();
     };
 
     initApp();
-  }, [lp.startParam, lp.initData, saveTempReferral, initializeUser, fetchReferrals]);
+
+    // Check if there's a referral code in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlReferralCode = urlParams.get('ref');
+    if (urlReferralCode) {
+      localStorage.setItem('referralCode', urlReferralCode);
+    }
+  }, [initializeUser, generateReferralCode, fetchReferrals]);
 
   const generateInviteLink = useCallback(() => {
-    if (!lp.initData?.user?.id) {
-      console.error('User ID not available');
+    if (!referralCode) {
+      console.error('Referral code not available');
       return null;
     }
-    return `https://t.me/${BOT_USERNAME}?startapp=invite_${lp.initData.user.id}`;
-  }, [lp.initData?.user?.id]);
+    return `https://t.me/${BOT_USERNAME}?startapp=${referralCode}`;
+  }, [referralCode]);
 
   const shareInviteLink = useCallback(() => {
     const inviteLink = generateInviteLink();
@@ -160,7 +171,7 @@ export const FriendsPage: FC = () => {
     );
   }, [referrals]);
 
-  console.log('Rendering FriendsPage. State:', { isLoading, referralsLength: referrals.length });
+  console.log('Rendering FriendsPage. State:', { isLoading, referralsLength: referrals.length, referralCode });
 
   return (
     <div style={{ padding: '20px', textAlign: 'center', paddingBottom: '60px' }}>
