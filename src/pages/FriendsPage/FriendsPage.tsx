@@ -39,23 +39,16 @@ export const FriendsPage: FC = () => {
   const initializeUser = useCallback(async () => {
     if (!lp.initData) {
       console.warn('Init data not available');
+      showPopup('Error', 'Unable to initialize user: Init data not available');
       return;
     }
 
     try {
+      console.log('Sending initData:', lp.initData);
       const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, {
         initData: lp.initData
       });
       console.log('User initialized:', response.data);
-
-      const storedReferralCode = localStorage.getItem('referralCode');
-      if (storedReferralCode) {
-        await axios.post(`${BACKEND_URL}/users/use-referral-code`, {
-          userId: response.data.telegramId,
-          referralCode: storedReferralCode
-        });
-        localStorage.removeItem('referralCode');
-      }
 
       return response.data;
     } catch (err) {
@@ -69,7 +62,7 @@ export const FriendsPage: FC = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(`${BACKEND_URL}/users/${userId}/referrals`);
-      console.log('Referrals response:', response);
+      console.log('Referrals response:', response.data);
 
       if (Array.isArray(response.data)) {
         setReferrals(response.data);
@@ -88,10 +81,22 @@ export const FriendsPage: FC = () => {
   const generateReferralCode = useCallback(async (userId: string) => {
     try {
       const response = await axios.post(`${BACKEND_URL}/users/generate-referral-code`, { userId });
+      console.log('Generated referral code:', response.data);
       setReferralCode(response.data.code);
     } catch (err) {
       console.error('Error generating referral code:', err);
       showPopup('Error', 'Failed to generate referral code. Please try again.');
+    }
+  }, [showPopup]);
+
+  const useReferralCode = useCallback(async (userId: string, code: string) => {
+    try {
+      const response = await axios.post(`${BACKEND_URL}/users/use-referral-code`, { userId, referralCode: code });
+      console.log('Used referral code:', response.data);
+      showPopup('Success', 'Referral code applied successfully!');
+    } catch (err) {
+      console.error('Error using referral code:', err);
+      showPopup('Error', 'Failed to use referral code. Please try again.');
     }
   }, [showPopup]);
 
@@ -101,6 +106,12 @@ export const FriendsPage: FC = () => {
       if (user) {
         await fetchReferrals(user.telegramId);
         await generateReferralCode(user.telegramId);
+
+        const storedReferralCode = localStorage.getItem('referralCode');
+        if (storedReferralCode) {
+          await useReferralCode(user.telegramId, storedReferralCode);
+          localStorage.removeItem('referralCode');
+        }
       }
     };
 
@@ -112,7 +123,7 @@ export const FriendsPage: FC = () => {
     if (urlReferralCode) {
       localStorage.setItem('referralCode', urlReferralCode);
     }
-  }, [initializeUser, fetchReferrals, generateReferralCode]);
+  }, [initializeUser, fetchReferrals, generateReferralCode, useReferralCode]);
 
   const generateInviteLink = useCallback(() => {
     if (!referralCode) {
@@ -125,7 +136,7 @@ export const FriendsPage: FC = () => {
   const shareInviteLink = useCallback(() => {
     const inviteLink = generateInviteLink();
     if (inviteLink) {
-      console.log('Generated invite link:', inviteLink);
+      console.log('Sharing invite link:', inviteLink);
       utils.shareURL(inviteLink, 'Join me in BallCry and get more rewards!');
     } else {
       showPopup('Error', 'Unable to create invite link. Please try again later.');
