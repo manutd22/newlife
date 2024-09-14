@@ -44,9 +44,12 @@ export const FriendsPage: FC = () => {
     }
 
     try {
-      console.log('Sending initData:', lp.initData);
+      // Убедимся, что initData - это строка
+      const initDataString = typeof lp.initData === 'string' ? lp.initData : JSON.stringify(lp.initData);
+      console.log('Sending initData:', initDataString);
+      
       const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, {
-        initData: lp.initData
+        initData: initDataString
       });
       console.log('User initialized:', response.data);
 
