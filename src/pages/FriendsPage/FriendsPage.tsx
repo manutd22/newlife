@@ -14,8 +14,8 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://eae7c41f405930681c88c6f1398cd4b4.serveo.net';
-const BOT_USERNAME = 'testonefornew_bot'; // Замените на имя вашего бота
+const BACKEND_URL = 'https://1249ae7f153cefa5586023774510ebbb.serveo.net';
+const BOT_USERNAME = 'testonefornew_bot';
 
 export const FriendsPage: FC = () => {
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -67,9 +67,36 @@ export const FriendsPage: FC = () => {
     }
   }, [lp.initData?.user?.id, showPopup]);
 
+  const updateReferrer = useCallback(async (referrerId: string) => {
+    if (!lp.initData?.user?.id) {
+      console.warn('User ID not available');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${BACKEND_URL}/users/update-referrer`, {
+        userId: lp.initData.user.id,
+        referrerId: referrerId,
+        initData: lp.initData
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      console.log('Referrer update response:', response);
+    } catch (err) {
+      console.error('Error updating referrer:', err);
+    }
+  }, [lp.initData]);
+
   useEffect(() => {
     fetchReferrals();
-  }, [fetchReferrals]);
+
+    if (lp.startParam && lp.startParam.startsWith('invite_')) {
+      const referrerId = lp.startParam.split('_')[1];
+      updateReferrer(referrerId);
+    }
+  }, [fetchReferrals, lp.startParam, updateReferrer]);
 
   const generateInviteLink = useCallback(() => {
     if (!lp.initData?.user?.id) {
