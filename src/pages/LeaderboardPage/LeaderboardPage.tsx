@@ -9,7 +9,7 @@ interface LeaderboardEntry {
 }
 
 // Укажите здесь базовый URL вашего бэкенда
-const API_BASE_URL = 'https://f1c4cbcf009a73679a825cf45b4ae539.serveo.net'; // Замените на реальный URL вашего бэкенда
+const API_BASE_URL = 'https://2d69e9319b59b91964256a1be499ac4b.serveo.net'; // Замените на реальный URL вашего бэкенда
 
 export const LeaderboardPage: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
