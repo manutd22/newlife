@@ -44,12 +44,9 @@ export const FriendsPage: FC = () => {
     }
 
     try {
-      // Убедимся, что initData - это строка
-      const initDataString = typeof lp.initData === 'string' ? lp.initData : JSON.stringify(lp.initData);
-      console.log('Sending initData:', initDataString);
-      
+      console.log('Sending initData:', lp.initData);
       const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, {
-        initData: initDataString
+        initData: lp.initData
       });
       console.log('User initialized:', response.data);
 
@@ -59,6 +56,7 @@ export const FriendsPage: FC = () => {
       showPopup('Error', 'Failed to initialize user. Please try again.');
     }
   }, [lp.initData, showPopup]);
+
 
   const fetchReferrals = useCallback(async (userId: string) => {
     console.log('Fetching referrals...');
