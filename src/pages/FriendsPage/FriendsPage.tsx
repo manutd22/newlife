@@ -35,6 +35,34 @@ export const FriendsPage: FC = () => {
     }
   }, []);
 
+  const saveTempReferral = useCallback(async (tempUserId: string, referrerId: string) => {
+    try {
+      await axios.post(`${BACKEND_URL}/users/save-temp-referral`, {
+        tempUserId,
+        referrerId
+      });
+      console.log('Temporary referral saved');
+    } catch (err) {
+      console.error('Error saving temporary referral:', err);
+    }
+  }, []);
+
+  const initializeUser = useCallback(async () => {
+    if (!lp.initData) {
+      console.warn('Init data not available');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, {
+        initData: lp.initData
+      });
+      console.log('User initialized:', response.data);
+    } catch (err) {
+      console.error('Error initializing user:', err);
+    }
+  }, [lp.initData]);
+
   const fetchReferrals = useCallback(async () => {
     console.log('Fetching referrals...');
     if (!lp.initData?.user?.id) {
@@ -67,44 +95,20 @@ export const FriendsPage: FC = () => {
     }
   }, [lp.initData?.user?.id, showPopup]);
 
-  const updateReferrer = useCallback(async (referrerId: string) => {
-    if (!lp.initData?.user?.id) {
-      console.warn('User ID not available');
-      return;
-    }
-
-    try {
-      const response = await axios.post(`${BACKEND_URL}/users/update-referrer`, {
-        userId: lp.initData.user.id,
-        referrerId: referrerId,
-        initData: lp.initData
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      console.log('Referrer update response:', response);
-      localStorage.removeItem('referrerId'); // Clear stored referrer ID after successful update
-    } catch (err) {
-      console.error('Error updating referrer:', err);
-    }
-  }, [lp.initData]);
-
   useEffect(() => {
-    fetchReferrals();
+    const initApp = async () => {
+      if (lp.startParam && lp.startParam.startsWith('invite_')) {
+        const referrerId = lp.startParam.split('_')[1];
+        const tempUserId = lp.initData?.user?.id?.toString() || 'unknown';
+        await saveTempReferral(tempUserId, referrerId);
+      }
+      
+      await initializeUser();
+      fetchReferrals();
+    };
 
-    // Check for stored referrer ID
-    const storedReferrerId = localStorage.getItem('referrerId');
-    if (storedReferrerId) {
-      updateReferrer(storedReferrerId);
-    }
-
-    if (lp.startParam && lp.startParam.startsWith('invite_')) {
-      const referrerId = lp.startParam.split('_')[1];
-      localStorage.setItem('referrerId', referrerId);
-      updateReferrer(referrerId);
-    }
-  }, [fetchReferrals, lp.startParam, updateReferrer]);
+    initApp();
+  }, [lp.startParam, lp.initData, saveTempReferral, initializeUser, fetchReferrals]);
 
   const generateInviteLink = useCallback(() => {
     if (!lp.initData?.user?.id) {
