@@ -14,7 +14,7 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://2d69e9319b59b91964256a1be499ac4b.serveo.net';
+const BACKEND_URL = 'https://92d97c9b97bb009de5ff1d4990c51c3b.serveo.net';
 const BOT_USERNAME = 'testonefornew_bot';
 
 export const FriendsPage: FC = () => {
@@ -76,8 +76,10 @@ export const FriendsPage: FC = () => {
       console.error('User ID not available');
       return null;
     }
-    return `https://t.me/${BOT_USERNAME}?startapp=invite_${lp.initData.user.id}`;
+    // Исправленный формат ссылки
+    return `https://t.me/${BOT_USERNAME}/ballcry?startapp=invite_${lp.initData.user.id}`;
   }, [lp.initData?.user?.id]);
+
 
   const shareInviteLink = useCallback(() => {
     const inviteLink = generateInviteLink();
