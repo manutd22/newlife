@@ -84,6 +84,7 @@ export const FriendsPage: FC = () => {
         }
       });
       console.log('Referrer update response:', response);
+      localStorage.removeItem('referrerId'); // Clear stored referrer ID after successful update
     } catch (err) {
       console.error('Error updating referrer:', err);
     }
@@ -92,8 +93,15 @@ export const FriendsPage: FC = () => {
   useEffect(() => {
     fetchReferrals();
 
+    // Check for stored referrer ID
+    const storedReferrerId = localStorage.getItem('referrerId');
+    if (storedReferrerId) {
+      updateReferrer(storedReferrerId);
+    }
+
     if (lp.startParam && lp.startParam.startsWith('invite_')) {
       const referrerId = lp.startParam.split('_')[1];
+      localStorage.setItem('referrerId', referrerId);
       updateReferrer(referrerId);
     }
   }, [fetchReferrals, lp.startParam, updateReferrer]);
