@@ -14,13 +14,13 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://0243cd8c0b78d7f6cf51068e8977382a.serveo.net';
+const BACKEND_URL = 'https://3b5fd67198c05f757a077b1f298a187e.serveo.net';
 const BOT_USERNAME = 'testonefornew_bot';
-const APP_NAME = 'ballcry';
 
 export const FriendsPage: FC = () => {
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
   const lp = useLaunchParams();
 
   const showPopup = useCallback((title: string, message: string) => {
@@ -37,10 +37,9 @@ export const FriendsPage: FC = () => {
   }, []);
 
   const fetchReferrals = useCallback(async () => {
-    console.log('Fetching referrals...');
-    if (!lp.initData?.user?.id) {
-      console.warn('User ID not available');
-      showPopup('Error', 'User ID not available');
+    if (!lp.initData?.user?.id || !token) {
+      console.warn('User ID or token not available');
+      showPopup('Error', 'User ID or token not available');
       setIsLoading(false);
       return;
     }
@@ -50,9 +49,9 @@ export const FriendsPage: FC = () => {
       const response = await axios.get(`${BACKEND_URL}/users/${lp.initData.user.id}/referrals`, {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       });
-      console.log('Referrals response:', response);
 
       if (Array.isArray(response.data)) {
         setReferrals(response.data);
@@ -66,18 +65,39 @@ export const FriendsPage: FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [lp.initData?.user?.id, showPopup]);
+  }, [lp.initData?.user?.id, token, showPopup]);
 
   useEffect(() => {
-    fetchReferrals();
-  }, [fetchReferrals]);
+    const saveTelegramUser = async () => {
+      if (lp.initDataRaw) {
+        try {
+          const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, {
+            initData: lp.initDataRaw,
+            startParam: lp.initData?.startParam
+          });
+          setToken(response.data.token);
+        } catch (error) {
+          console.error('Error saving user data:', error);
+          showPopup('Error', 'Failed to save user data');
+        }
+      }
+    };
+
+    saveTelegramUser();
+  }, [lp.initDataRaw, lp.initData?.startParam, showPopup]);
+
+  useEffect(() => {
+    if (token) {
+      fetchReferrals();
+    }
+  }, [fetchReferrals, token]);
 
   const generateInviteLink = useCallback(() => {
     if (!lp.initData?.user?.id) {
       console.error('User ID not available');
       return null;
     }
-    return `https://t.me/${BOT_USERNAME}/${APP_NAME}?startapp=invite_${lp.initData.user.id}`;
+    return `https://t.me/${BOT_USERNAME}?start=invite_${lp.initData.user.id}`;
   }, [lp.initData?.user?.id]);
 
   const shareInviteLink = useCallback(() => {
@@ -105,37 +125,6 @@ export const FriendsPage: FC = () => {
     }
   }, [generateInviteLink, showPopup]);
 
-  useEffect(() => {
-    const handleReferral = async () => {
-      const startParam = lp.initData?.startParam;
-      if (lp.initData?.user?.id) {
-        try {
-          if (startParam && startParam.startsWith('invite_')) {
-            // Обработка через startParam (для веб-версии)
-            await axios.post(`${BACKEND_URL}/users/process-referral`, {
-              userId: lp.initData.user.id,
-              startParam: startParam
-            });
-            showPopup('Success', 'You have been successfully referred!');
-          } else {
-            // Проверка сохраненной информации о реферале (для мобильных устройств)
-            const response = await axios.get(`${BACKEND_URL}/users/${APP_NAME}/check-referral`, {
-              params: { userId: lp.initData.user.id }
-            });
-            if (response.data.success) {
-              showPopup('Success', 'Referral information processed successfully!');
-            }
-          }
-        } catch (error) {
-          console.error('Error processing referral:', error);
-          showPopup('Error', 'Failed to process referral. Please try again later.');
-        }
-      }
-    };
-
-    handleReferral();
-  }, [lp.initData?.user?.id, lp.initData?.startParam, showPopup]);
-
   const renderReferralsList = useCallback(() => {
     if (referrals.length === 0) {
       return <p>No referrals yet. Invite your friends!</p>;
@@ -152,8 +141,6 @@ export const FriendsPage: FC = () => {
       </ol>
     );
   }, [referrals]);
-
-  console.log('Rendering FriendsPage. State:', { isLoading, referralsLength: referrals.length });
 
   return (
     <div style={{ padding: '20px', textAlign: 'center', paddingBottom: '60px' }}>
