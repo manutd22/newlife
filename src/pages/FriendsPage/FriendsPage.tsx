@@ -14,7 +14,7 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://30695bed2d1da5578c5fe1da962b6eaf.serveo.net';
+const BACKEND_URL = 'https://e95eef8375dc9c3be0e3aaaf5fb76235.serveo.net';
 const BOT_USERNAME = 'testonefornew_bot';
 
 export const FriendsPage: FC = () => {
