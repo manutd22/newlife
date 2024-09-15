@@ -14,8 +14,9 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://92d97c9b97bb009de5ff1d4990c51c3b.serveo.net';
+const BACKEND_URL = 'https://5be90127dc4e88a601ac4aa4992a16c7.serveo.net';
 const BOT_USERNAME = 'testonefornew_bot';
+const APP_NAME = 'ballcry';
 
 export const FriendsPage: FC = () => {
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -76,10 +77,8 @@ export const FriendsPage: FC = () => {
       console.error('User ID not available');
       return null;
     }
-    // Исправленный формат ссылки
-    return `https://t.me/${BOT_USERNAME}/ballcry?startapp=invite_${lp.initData.user.id}`;
+    return `https://t.me/${BOT_USERNAME}/${APP_NAME}?start=invite_${lp.initData.user.id}`;
   }, [lp.initData?.user?.id]);
-
 
   const shareInviteLink = useCallback(() => {
     const inviteLink = generateInviteLink();
@@ -109,16 +108,16 @@ export const FriendsPage: FC = () => {
   useEffect(() => {
     const handleReferral = async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const startApp = urlParams.get('startapp');
-      if (startApp && startApp.startsWith('invite_') && lp.initData?.user?.id) {
-        const referrerId = startApp.split('_')[1];
+      const startParam = urlParams.get('start');
+      if (startParam && startParam.startsWith('invite_') && lp.initData?.user?.id) {
         try {
-          await axios.post(`${BACKEND_URL}/users/${lp.initData.user.id}/referrer`, {
-            referrerId: referrerId
+          await axios.post(`${BACKEND_URL}/users/process-referral`, {
+            userId: lp.initData.user.id,
+            startParam: startParam
           });
           showPopup('Success', 'You have been successfully referred!');
         } catch (error) {
-          console.error('Error setting referrer:', error);
+          console.error('Error processing referral:', error);
           showPopup('Error', 'Failed to process referral. Please try again later.');
         }
       }
@@ -126,7 +125,6 @@ export const FriendsPage: FC = () => {
 
     handleReferral();
   }, [lp.initData?.user?.id, showPopup]);
-
 
   const renderReferralsList = useCallback(() => {
     if (referrals.length === 0) {
