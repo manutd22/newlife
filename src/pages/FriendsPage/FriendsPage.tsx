@@ -14,7 +14,7 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://5be90127dc4e88a601ac4aa4992a16c7.serveo.net';
+const BACKEND_URL = 'https://0243cd8c0b78d7f6cf51068e8977382a.serveo.net';
 const BOT_USERNAME = 'testonefornew_bot';
 const APP_NAME = 'ballcry';
 
