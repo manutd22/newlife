@@ -24,12 +24,22 @@ async function saveTelegramUser(initData: string) {
   try {
     const parsedInitData = JSON.parse(decodeURIComponent(initData));
     const startParam = parsedInitData.start_param;
+    console.log('Extracted startParam:', startParam);
     
     const response = await axios.post('https://30695bed2d1da5578c5fe1da962b6eaf.serveo.net/users/save-telegram-user', { 
       initData,
-      startParam // Добавляем startParam в запрос
+      startParam
     });
-    console.log('User data saved successfully:', response.data);
+    console.log('Server response:', response.data);
+
+    // Сохраняем JWT токен
+    if (response.data.token) {
+      localStorage.setItem('jwtToken', response.data.token);
+      console.log('JWT token saved to localStorage');
+    } else {
+      console.warn('No JWT token received from server');
+    }
+
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
