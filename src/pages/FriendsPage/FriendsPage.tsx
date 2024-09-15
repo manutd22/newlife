@@ -77,7 +77,7 @@ export const FriendsPage: FC = () => {
       console.error('User ID not available');
       return null;
     }
-    return `https://t.me/${BOT_USERNAME}/${APP_NAME}?start=invite_${lp.initData.user.id}`;
+    return `https://t.me/${BOT_USERNAME}/${APP_NAME}?startapp=invite_${lp.initData.user.id}`;
   }, [lp.initData?.user?.id]);
 
   const shareInviteLink = useCallback(() => {
@@ -107,15 +107,25 @@ export const FriendsPage: FC = () => {
 
   useEffect(() => {
     const handleReferral = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const startParam = urlParams.get('start');
-      if (startParam && startParam.startsWith('invite_') && lp.initData?.user?.id) {
+      const startParam = lp.initData?.startParam;
+      if (lp.initData?.user?.id) {
         try {
-          await axios.post(`${BACKEND_URL}/users/process-referral`, {
-            userId: lp.initData.user.id,
-            startParam: startParam
-          });
-          showPopup('Success', 'You have been successfully referred!');
+          if (startParam && startParam.startsWith('invite_')) {
+            // Обработка через startParam (для веб-версии)
+            await axios.post(`${BACKEND_URL}/users/process-referral`, {
+              userId: lp.initData.user.id,
+              startParam: startParam
+            });
+            showPopup('Success', 'You have been successfully referred!');
+          } else {
+            // Проверка сохраненной информации о реферале (для мобильных устройств)
+            const response = await axios.get(`${BACKEND_URL}/users/${APP_NAME}/check-referral`, {
+              params: { userId: lp.initData.user.id }
+            });
+            if (response.data.success) {
+              showPopup('Success', 'Referral information processed successfully!');
+            }
+          }
         } catch (error) {
           console.error('Error processing referral:', error);
           showPopup('Error', 'Failed to process referral. Please try again later.');
@@ -124,7 +134,7 @@ export const FriendsPage: FC = () => {
     };
 
     handleReferral();
-  }, [lp.initData?.user?.id, showPopup]);
+  }, [lp.initData?.user?.id, lp.initData?.startParam, showPopup]);
 
   const renderReferralsList = useCallback(() => {
     if (referrals.length === 0) {
