@@ -26,7 +26,7 @@ async function saveTelegramUser(initData: string) {
     const startParam = parsedInitData.start_param;
     console.log('Extracted startParam:', startParam);
     
-    const response = await axios.post('https://e95eef8375dc9c3be0e3aaaf5fb76235.serveo.net/users/save-telegram-user', { 
+    const response = await axios.post('https://52bc05e164d8180e4aad6a314f59fac6.serveo.net/users/save-telegram-user', { 
       initData,
       startParam
     });
