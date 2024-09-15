@@ -76,6 +76,7 @@ export const FriendsPage: FC = () => {
             startParam: lp.initData?.startParam
           });
           setToken(response.data.token);
+          localStorage.setItem('jwtToken', response.data.token);
         } catch (error) {
           console.error('Error saving user data:', error);
           showPopup('Error', 'Failed to save user data');
