@@ -98,7 +98,7 @@ export const FriendsPage: FC = () => {
       console.error('User ID not available');
       return null;
     }
-    return `https://t.me/${BOT_USERNAME}?start=invite_${lp.initData.user.id}`;
+    return `https://t.me/${BOT_USERNAME}?startapp=invite_${lp.initData.user.id}`;
   }, [lp.initData?.user?.id]);
 
   const shareInviteLink = useCallback(() => {
