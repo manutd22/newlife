@@ -49,6 +49,15 @@ export const App: FC = () => {
   const [isDataSaved, setIsDataSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Добавим отладочный вывод для всех важных переменных
+  useEffect(() => {
+    console.log('Launch Params:', lp);
+    console.log('Mini App:', miniApp);
+    console.log('Theme Params:', themeParams);
+    console.log('Viewport:', viewport);
+    console.log('Routes:', routes);
+  }, [lp, miniApp, themeParams, viewport]);
+
   const saveUserData = useCallback(async () => {
     if (lp.initDataRaw && !isDataSaved) {
       try {
@@ -77,32 +86,45 @@ export const App: FC = () => {
     }
   }, [lp, isDataSaved]);
 
-  useEffect(() => {
+   useEffect(() => {
     saveUserData();
   }, [saveUserData]);
 
   useEffect(() => {
+    console.log('Binding MiniApp CSS vars');
     return bindMiniAppCSSVars(miniApp, themeParams);
   }, [miniApp, themeParams]);
 
   useEffect(() => {
+    console.log('Binding Theme Params CSS vars');
     return bindThemeParamsCSSVars(themeParams);
   }, [themeParams]);
 
   useEffect(() => {
-    return viewport && bindViewportCSSVars(viewport);
+    if (viewport) {
+      console.log('Binding Viewport CSS vars');
+      return bindViewportCSSVars(viewport);
+    }
   }, [viewport]);
 
-  const navigator = useMemo(() => initNavigator('app-navigation-state'), []);
+  const navigator = useMemo(() => {
+    console.log('Initializing navigator');
+    return initNavigator('app-navigation-state');
+  }, []);
+
   const [location, reactNavigator] = useIntegration(navigator);
 
   useEffect(() => {
+    console.log('Attaching navigator');
     navigator.attach();
-    return () => navigator.detach();
+    return () => {
+      console.log('Detaching navigator');
+      navigator.detach();
+    };
   }, [navigator]);
 
   useEffect(() => {
-    console.log('Routes:', routes);
+    console.log('Checking routes:', routes);
     if (!Array.isArray(routes)) {
       console.error('Routes is not an array:', routes);
       setError('App configuration error. Please contact support.');
@@ -110,9 +132,11 @@ export const App: FC = () => {
   }, []);
 
   if (error) {
+    console.error('Rendering error state:', error);
     return <div>Error: {error}</div>;
   }
 
+  console.log('Rendering App component');
   return (
     <BalanceProvider>
       <AppRoot
@@ -122,7 +146,10 @@ export const App: FC = () => {
         <Router location={location} navigator={reactNavigator}>
           <Routes>
             {Array.isArray(routes) ? (
-              routes.map((route) => <Route key={route.path} {...route} />)
+              routes.map((route) => {
+                console.log('Rendering route:', route);
+                return <Route key={route.path} {...route} />;
+              })
             ) : (
               <Route path='*' element={<div>Error: Invalid route configuration</div>} />
             )}
