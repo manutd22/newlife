@@ -21,7 +21,7 @@ interface Quest {
   type: QuestType;
 }
 
-const BACKEND_URL = 'https://699633c1447197772d89cf45c0b36f77.serveo.net';
+const BACKEND_URL = 'https://821923cdcf10bb45c7c0b03d643b8d2f.serveo.net';
 
 export const QuestsComponent: React.FC = () => {
   const [quests, setQuests] = useState<Quest[]>([]);
