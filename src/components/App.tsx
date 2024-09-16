@@ -48,46 +48,37 @@ export const App: FC = () => {
   const viewport = useViewport();
   const [isDataSaved, setIsDataSaved] = useState(false);
 
-  const saveUserData = useCallback(async () => {
-    if (lp.initDataRaw && !isDataSaved) {
-      try {
-        console.log('Launch params:', lp);
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const startapp = urlParams.get('startapp') || 
-                         urlParams.get('start') ||
-                         lp.startParam || 
-                         window.Telegram?.WebApp?.initDataUnsafe?.start_param ||
-                         localStorage.getItem('pendingStartapp');
+ const saveUserData = useCallback(async () => {
+  if (lp.initDataRaw && !isDataSaved) {
+    try {
+      console.log('Launch params:', lp);
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const startapp = urlParams.get('startapp') || 
+                       urlParams.get('start') ||
+                       lp.startParam || 
+                       window.Telegram?.WebApp?.initDataUnsafe?.start_param ||
+                       localStorage.getItem('pendingStartapp');
 
-        console.log('Final startapp parameter:', startapp);
+      console.log('Final startapp parameter:', startapp);
+      console.log('URL startapp:', urlParams.get('startapp'));
+      console.log('URL start:', urlParams.get('start'));
+      console.log('Launch params startParam:', lp.startParam);
+      console.log('WebApp start_param:', window.Telegram?.WebApp?.initDataUnsafe?.start_param);
+      console.log('localStorage pendingStartapp:', localStorage.getItem('pendingStartapp'));
 
-        // Попытка парсинга initData для извлечения start_param
-        try {
-          const parsedInitData = JSON.parse(decodeURIComponent(lp.initDataRaw));
-          const initDataStartParam = parsedInitData.start_param;
-          if (initDataStartParam && !startapp) {
-            console.log('Found start_param in initData:', initDataStartParam);
-            await saveTelegramUser(lp.initDataRaw, initDataStartParam);
-          } else {
-            await saveTelegramUser(lp.initDataRaw, startapp);
-          }
-        } catch (parseError) {
-          console.error('Error parsing initData:', parseError);
-          await saveTelegramUser(lp.initDataRaw, startapp);
-        }
-
-        setIsDataSaved(true);
-        console.log('User data saved successfully');
-        
-        localStorage.removeItem('pendingStartapp');
-      } catch (error) {
-        console.error('Error saving user data:', error);
-      }
-    } else if (!lp.initDataRaw) {
-      console.warn('initDataRaw is empty or undefined');
+      await saveTelegramUser(lp.initDataRaw, startapp);
+      setIsDataSaved(true);
+      console.log('User data saved successfully');
+      
+      localStorage.removeItem('pendingStartapp');
+    } catch (error) {
+      console.error('Error saving user data:', error);
     }
-  }, [lp, isDataSaved]);
+  } else if (!lp.initDataRaw) {
+    console.warn('initDataRaw is empty or undefined');
+  }
+}, [lp, isDataSaved]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);

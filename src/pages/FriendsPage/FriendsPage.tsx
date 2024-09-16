@@ -37,36 +37,38 @@ export const FriendsPage: FC = () => {
   }, []);
 
   const fetchReferrals = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const token = localStorage.getItem('jwtToken');
-      if (!token) {
-        throw new Error('JWT token not found');
-      }
-
-      const response = await axios.get(`${BACKEND_URL}/users/${lp.initData?.user?.id}/referrals`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      console.log('Referrals response:', response.data);
-
-      if (Array.isArray(response.data)) {
-        setReferrals(response.data);
-      } else {
-        throw new Error('Unexpected response format');
-      }
-    } catch (err) {
-      console.error('Error fetching referrals:', err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      showPopup('Error', 'Failed to load referrals. Please try again later.');
-    } finally {
-      setIsLoading(false);
+  setIsLoading(true);
+  setError(null);
+  try {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+      throw new Error('JWT token not found');
     }
-  }, [lp.initData?.user?.id, showPopup]);
+
+    console.log('Fetching referrals with token:', token);
+
+    const response = await axios.get(`${BACKEND_URL}/users/${lp.initData?.user?.id}/referrals`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    console.log('Referrals response:', response.data);
+
+    if (Array.isArray(response.data)) {
+      setReferrals(response.data);
+    } else {
+      throw new Error('Unexpected response format');
+    }
+  } catch (err) {
+    console.error('Error fetching referrals:', err);
+    setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    showPopup('Error', 'Failed to load referrals. Please try again later.');
+  } finally {
+    setIsLoading(false);
+  }
+}, [lp.initData?.user?.id, showPopup]);
 
   useEffect(() => {
     fetchReferrals();
