@@ -73,7 +73,7 @@ export const FriendsPage: FC = () => {
         try {
           const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, {
             initData: lp.initDataRaw,
-            startParam: lp.initData?.startParam
+            startapp: lp.initData?.startParam
           });
           setToken(response.data.token);
           localStorage.setItem('jwtToken', response.data.token);
@@ -93,26 +93,40 @@ export const FriendsPage: FC = () => {
     }
   }, [fetchReferrals, token]);
 
-  const generateInviteLink = useCallback(() => {
+  const generateInviteLink = useCallback(async () => {
     if (!lp.initData?.user?.id) {
       console.error('User ID not available');
+      showPopup('Error', 'Unable to generate invite link. User ID not available.');
       return null;
     }
-    return `https://t.me/${BOT_USERNAME}?startapp=invite_${lp.initData.user.id}`;
-  }, [lp.initData?.user?.id]);
-
-  const shareInviteLink = useCallback(() => {
-    const inviteLink = generateInviteLink();
-    if (inviteLink) {
+    
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/generate-referral-code`, 
+        { userId: lp.initData.user.id.toString() },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      const referralCode = response.data.code;
+      const inviteLink = `https://t.me/${BOT_USERNAME}?startapp=${referralCode}`;
       console.log('Generated invite link:', inviteLink);
+      return inviteLink;
+    } catch (error) {
+      console.error('Error generating referral code:', error);
+      showPopup('Error', 'Failed to generate invite link. Please try again.');
+      return null;
+    }
+  }, [lp.initData?.user?.id, token, showPopup]);
+
+  const shareInviteLink = useCallback(async () => {
+    const inviteLink = await generateInviteLink();
+    if (inviteLink) {
       utils.shareURL(inviteLink, 'Join me in BallCry and get more rewards!');
     } else {
       showPopup('Error', 'Unable to create invite link. Please try again later.');
     }
-  }, [generateInviteLink, showPopup]);
+  }, [generateInviteLink, showPopup, utils]);
 
-  const copyInviteLink = useCallback(() => {
-    const inviteLink = generateInviteLink();
+  const copyInviteLink = useCallback(async () => {
+    const inviteLink = await generateInviteLink();
     if (inviteLink) {
       navigator.clipboard.writeText(inviteLink)
         .then(() => {
