@@ -19,15 +19,13 @@ import { routes } from '@/navigation/routes.tsx';
 
 const BACKEND_URL = 'https://79f02e792c66f7fd08a2110f608af4e8.serveo.net';
 
-const saveTelegramUser = async (initData: string, startapp: string | undefined | null) => {
+const saveTelegramUser = async (initData: string) => {
   console.log('Attempting to save user data:');
   console.log('initData:', initData);
-  console.log('startapp before sending:', startapp);
 
   try {
     const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, { 
-      initData, 
-      startapp: startapp || null 
+      initData
     }, {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -49,36 +47,20 @@ export const App: FC = () => {
   const [isDataSaved, setIsDataSaved] = useState(false);
 
  const saveUserData = useCallback(async () => {
-  if (lp.initDataRaw && !isDataSaved) {
-    try {
-      console.log('Launch params:', lp);
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      const startapp = urlParams.get('startapp') || 
-                       urlParams.get('start') ||
-                       lp.startParam || 
-                       window.Telegram?.WebApp?.initDataUnsafe?.start_param ||
-                       localStorage.getItem('pendingStartapp');
-
-      console.log('Final startapp parameter:', startapp);
-      console.log('URL startapp:', urlParams.get('startapp'));
-      console.log('URL start:', urlParams.get('start'));
-      console.log('Launch params startParam:', lp.startParam);
-      console.log('WebApp start_param:', window.Telegram?.WebApp?.initDataUnsafe?.start_param);
-      console.log('localStorage pendingStartapp:', localStorage.getItem('pendingStartapp'));
-
-      await saveTelegramUser(lp.initDataRaw, startapp);
-      setIsDataSaved(true);
-      console.log('User data saved successfully');
-      
-      localStorage.removeItem('pendingStartapp');
-    } catch (error) {
-      console.error('Error saving user data:', error);
+    if (lp.initDataRaw && !isDataSaved) {
+      try {
+        console.log('Launch params:', lp);
+        
+        await saveTelegramUser(lp.initDataRaw);
+        setIsDataSaved(true);
+        console.log('User data saved successfully');
+      } catch (error) {
+        console.error('Error saving user data:', error);
+      }
+    } else if (!lp.initDataRaw) {
+      console.warn('initDataRaw is empty or undefined');
     }
-  } else if (!lp.initDataRaw) {
-    console.warn('initDataRaw is empty or undefined');
-  }
-}, [lp, isDataSaved]);
+  }, [lp, isDataSaved]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
