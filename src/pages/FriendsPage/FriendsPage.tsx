@@ -14,7 +14,7 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://d5f8-78-84-0-200.ngrok-free.app';
+const BACKEND_URL = 'https://699633c1447197772d89cf45c0b36f77.serveo.net';
 const BOT_USERNAME = 'testonefornew_bot';
 
 export const FriendsPage: FC = () => {
