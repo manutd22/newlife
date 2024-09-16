@@ -14,7 +14,7 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://821923cdcf10bb45c7c0b03d643b8d2f.serveo.net';
+const BACKEND_URL = 'https://0414f88796ef03c69967997f7601e4d0.serveo.net';
 const BOT_USERNAME = 'testonefornew_bot';
 
 export const FriendsPage: FC = () => {
@@ -68,24 +68,24 @@ export const FriendsPage: FC = () => {
   }, [lp.initData?.user?.id, token, showPopup]);
 
   useEffect(() => {
-    const saveTelegramUser = async () => {
-      if (lp.initDataRaw) {
-        try {
-          const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, {
-            initData: lp.initDataRaw,
-            startapp: lp.initData?.startParam
-          });
-          setToken(response.data.token);
-          localStorage.setItem('jwtToken', response.data.token);
-        } catch (error) {
-          console.error('Error saving user data:', error);
-          showPopup('Error', 'Failed to save user data');
-        }
+  const saveTelegramUser = async () => {
+    if (lp.initDataRaw) {
+      try {
+        const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, {
+          initData: lp.initDataRaw,
+          startapp: lp.startParam || new URLSearchParams(window.location.search).get('startapp')
+        });
+        setToken(response.data.token);
+        localStorage.setItem('jwtToken', response.data.token);
+      } catch (error) {
+        console.error('Error saving user data:', error);
+        showPopup('Error', 'Failed to save user data');
       }
-    };
+    }
+  };
 
-    saveTelegramUser();
-  }, [lp.initDataRaw, lp.initData?.startParam, showPopup]);
+  saveTelegramUser();
+}, [lp.initDataRaw, lp.startParam, showPopup]);
 
   useEffect(() => {
     if (token) {
