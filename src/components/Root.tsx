@@ -21,10 +21,17 @@ const ErrorBoundaryError: FC<{ error: unknown }> = ({ error }) => (
 );
 
 const Inner: FC = () => {
-  const debug = useLaunchParams().startParam === 'debug';
+  const { startParam } = useLaunchParams();
+  const debug = startParam === 'debug';
   const manifestUrl = useMemo(() => {
     return new URL('tonconnect-manifest.json', window.location.href).toString();
   }, []);
+
+  useEffect(() => {
+    if (startParam) {
+      localStorage.setItem('pendingStartParam', startParam);
+    }
+  }, [startParam]);
 
   // Enable debug mode to see all the methods sent and events received.
   useEffect(() => {

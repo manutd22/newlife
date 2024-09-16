@@ -17,7 +17,7 @@ import { BalanceProvider } from '../contexts/balanceContext';
 
 import { routes } from '@/navigation/routes.tsx';
 
-const BACKEND_URL = 'https://b83fc6866762c7316b8fc746d2fafd7b.serveo.net';
+const BACKEND_URL = 'https://79f02e792c66f7fd08a2110f608af4e8.serveo.net';
 
 const saveTelegramUser = async (initData: string, startapp: string | undefined | null) => {
   console.log('Attempting to save user data:');
@@ -55,13 +55,28 @@ export const App: FC = () => {
         
         const urlParams = new URLSearchParams(window.location.search);
         const startapp = urlParams.get('startapp') || 
+                         urlParams.get('start') ||
                          lp.startParam || 
                          window.Telegram?.WebApp?.initDataUnsafe?.start_param ||
                          localStorage.getItem('pendingStartapp');
 
-        console.log('startapp parameter:', startapp);
+        console.log('Final startapp parameter:', startapp);
 
-        await saveTelegramUser(lp.initDataRaw, startapp);
+        // Попытка парсинга initData для извлечения start_param
+        try {
+          const parsedInitData = JSON.parse(decodeURIComponent(lp.initDataRaw));
+          const initDataStartParam = parsedInitData.start_param;
+          if (initDataStartParam && !startapp) {
+            console.log('Found start_param in initData:', initDataStartParam);
+            await saveTelegramUser(lp.initDataRaw, initDataStartParam);
+          } else {
+            await saveTelegramUser(lp.initDataRaw, startapp);
+          }
+        } catch (parseError) {
+          console.error('Error parsing initData:', parseError);
+          await saveTelegramUser(lp.initDataRaw, startapp);
+        }
+
         setIsDataSaved(true);
         console.log('User data saved successfully');
         
@@ -76,7 +91,7 @@ export const App: FC = () => {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const startapp = urlParams.get('startapp');
+    const startapp = urlParams.get('startapp') || urlParams.get('start');
     if (startapp) {
       localStorage.setItem('pendingStartapp', startapp);
     }

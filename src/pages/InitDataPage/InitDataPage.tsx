@@ -23,16 +23,25 @@ async function saveTelegramUser(initData: string) {
   console.log('Attempting to save user data:', initData);
   try {
     const parsedInitData = JSON.parse(decodeURIComponent(initData));
-    const startParam = parsedInitData.start_param;
-    console.log('Extracted startParam:', startParam);
+    let startParam = parsedInitData.start_param;
     
-    const response = await axios.post('https://b83fc6866762c7316b8fc746d2fafd7b.serveo.net/users/save-telegram-user', { 
+    // Попробуем получить startParam из других источников, если он не определен
+    if (!startParam) {
+      const urlParams = new URLSearchParams(window.location.search);
+      startParam = urlParams.get('startapp') || 
+                   urlParams.get('start') ||
+                   window.Telegram?.WebApp?.initDataUnsafe?.start_param ||
+                   localStorage.getItem('pendingStartParam');
+    }
+    
+    console.log('Final startParam:', startParam);
+    
+    const response = await axios.post('https://79f02e792c66f7fd08a2110f608af4e8.serveo.net/users/save-telegram-user', { 
       initData,
-      startParam
+      startapp: startParam // Изменено с startParam на startapp
     });
     console.log('Server response:', response.data);
 
-    // Сохраняем JWT токен
     if (response.data.token) {
       localStorage.setItem('jwtToken', response.data.token);
       console.log('JWT token saved to localStorage');
@@ -52,7 +61,6 @@ async function saveTelegramUser(initData: string) {
     throw error;
   }
 }
-
 export const InitDataPage: FC = () => {
   const { initDataRaw } = useLaunchParams();
   const initData = useInitData();
