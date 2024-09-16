@@ -17,17 +17,17 @@ import { BalanceProvider } from '../contexts/balanceContext';
 
 import { routes } from '@/navigation/routes.tsx';
 
-const BACKEND_URL = 'https://0414f88796ef03c69967997f7601e4d0.serveo.net';
+const BACKEND_URL = 'https://b83fc6866762c7316b8fc746d2fafd7b.serveo.net';
 
-const saveTelegramUser = async (initData: string, startParam: string | undefined | null) => {
+const saveTelegramUser = async (initData: string, startapp: string | undefined | null) => {
   console.log('Attempting to save user data:');
   console.log('initData:', initData);
-  console.log('start_param before sending:', startParam);
+  console.log('startapp before sending:', startapp);
 
   try {
     const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, { 
       initData, 
-      startParam: startParam || null 
+      startapp: startapp || null 
     }, {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -54,18 +54,18 @@ export const App: FC = () => {
         console.log('Launch params:', lp);
         
         const urlParams = new URLSearchParams(window.location.search);
-        const startParam = urlParams.get('start') || 
-                           lp.startParam || 
-                           window.Telegram?.WebApp?.initDataUnsafe?.start_param ||
-                           localStorage.getItem('pendingStartParam');
+        const startapp = urlParams.get('startapp') || 
+                         lp.startParam || 
+                         window.Telegram?.WebApp?.initDataUnsafe?.start_param ||
+                         localStorage.getItem('pendingStartapp');
 
-        console.log('startParam:', startParam);
+        console.log('startapp parameter:', startapp);
 
-        await saveTelegramUser(lp.initDataRaw, startParam);
+        await saveTelegramUser(lp.initDataRaw, startapp);
         setIsDataSaved(true);
         console.log('User data saved successfully');
         
-        localStorage.removeItem('pendingStartParam');
+        localStorage.removeItem('pendingStartapp');
       } catch (error) {
         console.error('Error saving user data:', error);
       }
@@ -76,9 +76,9 @@ export const App: FC = () => {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const startParam = urlParams.get('start');
-    if (startParam) {
-      localStorage.setItem('pendingStartParam', startParam);
+    const startapp = urlParams.get('startapp');
+    if (startapp) {
+      localStorage.setItem('pendingStartapp', startapp);
     }
 
     saveUserData();
