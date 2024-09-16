@@ -20,7 +20,7 @@ const BOT_USERNAME = 'testonefornew_bot';
 export const FriendsPage: FC = () => {
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const lp = useLaunchParams();
 
   const showPopup = useCallback((title: string, message: string) => {
@@ -37,61 +37,40 @@ export const FriendsPage: FC = () => {
   }, []);
 
   const fetchReferrals = useCallback(async () => {
-    if (!lp.initData?.user?.id || !token) {
-      console.warn('User ID or token not available');
-      showPopup('Error', 'User ID or token not available');
-      setIsLoading(false);
-      return;
-    }
-
+    setIsLoading(true);
+    setError(null);
     try {
-      setIsLoading(true);
-      const response = await axios.get(`${BACKEND_URL}/users/${lp.initData.user.id}/referrals`, {
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
+        throw new Error('JWT token not found');
+      }
+
+      const response = await axios.get(`${BACKEND_URL}/users/${lp.initData?.user?.id}/referrals`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
       });
 
+      console.log('Referrals response:', response.data);
+
       if (Array.isArray(response.data)) {
         setReferrals(response.data);
       } else {
-        console.error('Unexpected response format:', response.data);
-        showPopup('Error', 'Unexpected data format received');
+        throw new Error('Unexpected response format');
       }
     } catch (err) {
       console.error('Error fetching referrals:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
       showPopup('Error', 'Failed to load referrals. Please try again later.');
     } finally {
       setIsLoading(false);
     }
-  }, [lp.initData?.user?.id, token, showPopup]);
+  }, [lp.initData?.user?.id, showPopup]);
 
   useEffect(() => {
-  const saveTelegramUser = async () => {
-    if (lp.initDataRaw) {
-      try {
-        const response = await axios.post(`${BACKEND_URL}/users/save-telegram-user`, {
-          initData: lp.initDataRaw,
-          startapp: lp.startParam || new URLSearchParams(window.location.search).get('startapp')
-        });
-        setToken(response.data.token);
-        localStorage.setItem('jwtToken', response.data.token);
-      } catch (error) {
-        console.error('Error saving user data:', error);
-        showPopup('Error', 'Failed to save user data');
-      }
-    }
-  };
-
-  saveTelegramUser();
-}, [lp.initDataRaw, lp.startParam, showPopup]);
-
-  useEffect(() => {
-    if (token) {
-      fetchReferrals();
-    }
-  }, [fetchReferrals, token]);
+    fetchReferrals();
+  }, [fetchReferrals]);
 
   const generateInviteLink = useCallback(async () => {
     if (!lp.initData?.user?.id) {
@@ -101,7 +80,12 @@ export const FriendsPage: FC = () => {
     }
     
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/generate-referral-code`, 
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
+        throw new Error('JWT token not found');
+      }
+
+      const response = await axios.post(`${BACKEND_URL}/users/generate-referral-code`, 
         { userId: lp.initData.user.id.toString() },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
@@ -114,7 +98,7 @@ export const FriendsPage: FC = () => {
       showPopup('Error', 'Failed to generate invite link. Please try again.');
       return null;
     }
-  }, [lp.initData?.user?.id, token, showPopup]);
+  }, [lp.initData?.user?.id, showPopup]);
 
   const shareInviteLink = useCallback(async () => {
     const inviteLink = await generateInviteLink();
@@ -140,22 +124,15 @@ export const FriendsPage: FC = () => {
     }
   }, [generateInviteLink, showPopup]);
 
-  const renderReferralsList = useCallback(() => {
-    if (referrals.length === 0) {
-      return <p>No referrals yet. Invite your friends!</p>;
-    }
-    
+  if (error) {
     return (
-      <ol style={{ textAlign: 'left', paddingLeft: '20px' }}>
-        {referrals.map((referral, index) => (
-          <li key={referral.id || index}>
-            {referral.firstName || ''} {referral.lastName || ''} 
-            {referral.username ? `(@${referral.username})` : ''}
-          </li>
-        ))}
-      </ol>
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Error loading referrals</h2>
+        <p>{error}</p>
+        <Button onClick={fetchReferrals}>Try Again</Button>
+      </div>
     );
-  }, [referrals]);
+  }
 
   return (
     <div style={{ padding: '20px', textAlign: 'center', paddingBottom: '60px' }}>
@@ -175,7 +152,14 @@ export const FriendsPage: FC = () => {
       {isLoading ? (
         <p>Loading referrals...</p>
       ) : (
-        renderReferralsList()
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {referrals.map((referral, index) => (
+            <li key={referral.id || index} style={{ marginBottom: '10px' }}>
+              {referral.firstName || ''} {referral.lastName || ''} 
+              {referral.username ? `(@${referral.username})` : ''}
+            </li>
+          ))}
+        </ul>
       )}
 
       <NavigationBar />
