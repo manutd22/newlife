@@ -17,7 +17,7 @@ import { BalanceProvider } from '../contexts/balanceContext';
 
 import { routes } from '@/navigation/routes.tsx';
 
-const BACKEND_URL = 'https://d01b-78-84-0-200.ngrok-free.app';
+const BACKEND_URL = 'https://d5f8-78-84-0-200.ngrok-free.app';
 
 const saveTelegramUser = async (initData: string, startParam: string | undefined | null) => {
   console.log('Attempting to save user data:');

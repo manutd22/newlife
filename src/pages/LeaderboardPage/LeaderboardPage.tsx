@@ -9,7 +9,7 @@ interface LeaderboardEntry {
 }
 
 // Укажите здесь базовый URL вашего бэкенда
-const API_BASE_URL = 'https://d01b-78-84-0-200.ngrok-free.app'; // Замените на реальный URL вашего бэкенда
+const API_BASE_URL = 'https://d5f8-78-84-0-200.ngrok-free.app'; // Замените на реальный URL вашего бэкенда
 
 export const LeaderboardPage: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
