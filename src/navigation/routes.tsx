@@ -46,3 +46,11 @@ export const routes: Route[] = [
   { path: '/leaderboard', Component: LeaderboardPage, title: 'Leaderboard' },
   { path: '/friends', Component: FriendsPage, title: 'Friends' },
 ];
+
+// Проверка, что routes действительно является массивом
+if (!Array.isArray(routes)) {
+  console.error('routes is not an array:', routes);
+}
+
+// Экспорт по умолчанию для совместимости
+export default routes;

@@ -45,8 +45,9 @@ export const App: FC = () => {
   const themeParams = useThemeParams();
   const viewport = useViewport();
   const [isDataSaved, setIsDataSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
- const saveUserData = useCallback(async () => {
+  const saveUserData = useCallback(async () => {
     if (lp.initDataRaw && !isDataSaved) {
       try {
         console.log('Launch params:', lp);
@@ -56,9 +57,12 @@ export const App: FC = () => {
         console.log('User data saved successfully');
       } catch (error) {
         console.error('Error saving user data:', error);
+      } finally {
+        setIsLoading(false);
       }
     } else if (!lp.initDataRaw) {
       console.warn('initDataRaw is empty or undefined');
+      setIsLoading(false);
     }
   }, [lp, isDataSaved]);
 
@@ -92,6 +96,30 @@ export const App: FC = () => {
     return () => navigator.detach();
   }, [navigator]);
 
+  console.log('Routes:', routes);
+
+  const renderRoutes = () => {
+    try {
+      if (!Array.isArray(routes)) {
+        console.error('Routes is not an array:', routes);
+        return null;
+      }
+      return (
+        <Routes>
+          {routes.map((route) => <Route key={route.path} {...route} />)}
+          <Route path='*' element={<Navigate to='/'/>}/>
+        </Routes>
+      );
+    } catch (error) {
+      console.error('Error rendering routes:', error);
+      return <div>An error occurred while loading the app. Please try again later.</div>;
+    }
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <BalanceProvider>
       <AppRoot
@@ -99,10 +127,7 @@ export const App: FC = () => {
         platform={['macos', 'ios'].includes(lp.platform) ? 'ios' : 'base'}
       >
         <Router location={location} navigator={reactNavigator}>
-          <Routes>
-            {routes.map((route) => <Route key={route.path} {...route} />)}
-            <Route path='*' element={<Navigate to='/'/>}/>
-          </Routes>
+          {renderRoutes()}
         </Router>
       </AppRoot>
     </BalanceProvider>
