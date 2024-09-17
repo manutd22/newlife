@@ -17,7 +17,7 @@ import { BalanceProvider } from '../contexts/balanceContext';
 
 import { routes } from '@/navigation/routes.tsx';
 
-const BACKEND_URL = 'https://desktop-lhtbkge.tail0f113f.ts.net/';
+const BACKEND_URL = 'https://desktop-lhtbkge.tail0f113f.ts.net';
 
 const saveTelegramUser = async (initData: string) => {
   console.log('Attempting to save user data:');
