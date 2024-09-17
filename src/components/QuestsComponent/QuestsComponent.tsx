@@ -21,7 +21,7 @@ interface Quest {
   type: QuestType;
 }
 
-const BACKEND_URL = 'angry-paths-swim.loca.lt';
+const BACKEND_URL = 'https://desktop-lhtbkge.tail0f113f.ts.net/';
 
 export const QuestsComponent: React.FC = () => {
   const [quests, setQuests] = useState<Quest[]>([]);

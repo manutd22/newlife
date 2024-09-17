@@ -36,7 +36,7 @@ async function saveTelegramUser(initData: string) {
     
     console.log('Final startParam:', startParam);
     
-    const response = await axios.post('angry-paths-swim.loca.lt/users/save-telegram-user', { 
+    const response = await axios.post('https://desktop-lhtbkge.tail0f113f.ts.net/users/save-telegram-user', { 
       initData,
       startapp: startParam // Изменено с startParam на startapp
     });

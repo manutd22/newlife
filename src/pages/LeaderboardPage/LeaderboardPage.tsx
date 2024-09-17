@@ -9,7 +9,7 @@ interface LeaderboardEntry {
 }
 
 // Укажите здесь базовый URL вашего бэкенда
-const API_BASE_URL = 'angry-paths-swim.loca.lt'; // Замените на реальный URL вашего бэкенда
+const API_BASE_URL = 'https://desktop-lhtbkge.tail0f113f.ts.net/'; // Замените на реальный URL вашего бэкенда
 
 export const LeaderboardPage: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
