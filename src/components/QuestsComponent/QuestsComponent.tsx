@@ -21,7 +21,7 @@ interface Quest {
   type: QuestType;
 }
 
-const BACKEND_URL = 'https://impala-heroic-spider.ngrok-free.app';
+const BACKEND_URL = 'angry-paths-swim.loca.lt';
 
 export const QuestsComponent: React.FC = () => {
   const [quests, setQuests] = useState<Quest[]>([]);

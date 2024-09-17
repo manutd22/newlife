@@ -14,7 +14,7 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://impala-heroic-spider.ngrok-free.app';
+const BACKEND_URL = 'angry-paths-swim.loca.lt';
 const BOT_USERNAME = 'testonefornew_bot';
 
 export const FriendsPage: FC = () => {
