@@ -17,7 +17,7 @@ import { BalanceProvider } from '../contexts/balanceContext';
 
 import { routes } from '@/navigation/routes.tsx';
 
-const BACKEND_URL = 'https://d2ccd4c3abcf4ac991dfb54cf5fbcdd2.serveo.net';
+const BACKEND_URL = 'https://impala-heroic-spider.ngrok-free.app';
 
 const saveTelegramUser = async (initData: string) => {
   console.log('Attempting to save user data:');

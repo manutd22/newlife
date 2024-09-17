@@ -14,7 +14,7 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://d2ccd4c3abcf4ac991dfb54cf5fbcdd2.serveo.net';
+const BACKEND_URL = 'https://impala-heroic-spider.ngrok-free.app';
 const BOT_USERNAME = 'testonefornew_bot';
 
 export const FriendsPage: FC = () => {

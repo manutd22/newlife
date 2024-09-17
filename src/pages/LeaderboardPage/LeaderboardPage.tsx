@@ -9,7 +9,7 @@ interface LeaderboardEntry {
 }
 
 // Укажите здесь базовый URL вашего бэкенда
-const API_BASE_URL = 'https://d2ccd4c3abcf4ac991dfb54cf5fbcdd2.serveo.net'; // Замените на реальный URL вашего бэкенда
+const API_BASE_URL = 'https://impala-heroic-spider.ngrok-free.app'; // Замените на реальный URL вашего бэкенда
 
 export const LeaderboardPage: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);

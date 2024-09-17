@@ -21,7 +21,7 @@ interface Quest {
   type: QuestType;
 }
 
-const BACKEND_URL = 'https://d2ccd4c3abcf4ac991dfb54cf5fbcdd2.serveo.net';
+const BACKEND_URL = 'https://impala-heroic-spider.ngrok-free.app';
 
 export const QuestsComponent: React.FC = () => {
   const [quests, setQuests] = useState<Quest[]>([]);
