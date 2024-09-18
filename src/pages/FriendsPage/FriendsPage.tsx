@@ -13,6 +13,29 @@ interface Referral {
   lastName?: string;
 }
 
+// Расширенное определение типа для Telegram WebApp
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp?: {
+        initDataUnsafe?: {
+          start_param?: string;
+          user?: {
+            id: number;
+            first_name: string;
+            last_name?: string;
+            username?: string;
+            language_code?: string;
+          };
+        };
+        showPopup: (params: { title: string; message: string; buttons: Array<{ type: string }> }) => void;
+        shareUrl: (url: string) => void;
+        close: () => void;
+      };
+    };
+  }
+}
+
 const utils = initUtils();
 const BACKEND_URL = 'https://56e111adba6b6a91e60888443ade8386.serveo.net';
 const BOT_USERNAME = 'testonefornew_bot';
@@ -37,38 +60,35 @@ export const FriendsPage: FC = () => {
   }, []);
 
   const fetchReferrals = useCallback(async () => {
-  setIsLoading(true);
-  setError(null);
-  try {
-    const token = localStorage.getItem('jwtToken');
-    if (!token) {
-      throw new Error('JWT token not found');
-    }
-
-    console.log('Fetching referrals with token:', token);
-
-    const response = await axios.get(`${BACKEND_URL}/users/${lp.initData?.user?.id}/referrals`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+    setIsLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
+        throw new Error('JWT token not found');
       }
-    });
 
-    console.log('Referrals response:', response.data);
+      const response = await axios.get<Referral[]>(`${BACKEND_URL}/users/${lp.initData?.user?.id}/referrals`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-    if (Array.isArray(response.data)) {
       setReferrals(response.data);
-    } else {
-      throw new Error('Unexpected response format');
+    } catch (err) {
+      console.error('Error fetching referrals:', err);
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+        // Here you might want to redirect to a login page or refresh the token
+      } else {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      }
+      showPopup('Error', 'Failed to load referrals. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    console.error('Error fetching referrals:', err);
-    setError(err instanceof Error ? err.message : 'An unknown error occurred');
-    showPopup('Error', 'Failed to load referrals. Please try again later.');
-  } finally {
-    setIsLoading(false);
-  }
-}, [lp.initData?.user?.id, showPopup]);
+  }, [lp.initData?.user?.id, showPopup]);
 
   useEffect(() => {
     fetchReferrals();
@@ -87,14 +107,12 @@ export const FriendsPage: FC = () => {
         throw new Error('JWT token not found');
       }
 
-      const response = await axios.post(`${BACKEND_URL}/users/generate-referral-code`, 
+      const response = await axios.post<{ code: string }>(`${BACKEND_URL}/users/generate-referral-code`, 
         { userId: lp.initData.user.id.toString() },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       const referralCode = response.data.code;
-      const inviteLink = `https://t.me/${BOT_USERNAME}?startapp=${referralCode}`;
-      console.log('Generated invite link:', inviteLink);
-      return inviteLink;
+      return `https://t.me/${BOT_USERNAME}?startapp=${referralCode}`;
     } catch (error) {
       console.error('Error generating referral code:', error);
       showPopup('Error', 'Failed to generate invite link. Please try again.');
@@ -105,7 +123,11 @@ export const FriendsPage: FC = () => {
   const shareInviteLink = useCallback(async () => {
     const inviteLink = await generateInviteLink();
     if (inviteLink) {
-      utils.shareURL(inviteLink, 'Join me in BallCry and get more rewards!');
+      if (window.Telegram?.WebApp?.shareUrl) {
+        window.Telegram.WebApp.shareUrl(inviteLink);
+      } else {
+        utils.shareURL(inviteLink, 'Join me in BallCry and get more rewards!');
+      }
     } else {
       showPopup('Error', 'Unable to create invite link. Please try again later.');
     }
