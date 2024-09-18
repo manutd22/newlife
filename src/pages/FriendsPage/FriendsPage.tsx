@@ -14,7 +14,7 @@ interface Referral {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://desktop-lhtbkge.tail0f113f.ts.net';
+const BACKEND_URL = 'https://a35700da17dd92.lhr.life';
 const BOT_USERNAME = 'testonefornew_bot';
 
 export const FriendsPage: FC = () => {
