@@ -17,7 +17,7 @@ import { BalanceProvider } from '../contexts/balanceContext';
 
 import { routes } from '@/navigation/routes.tsx';
 
-const BACKEND_URL = 'https://3cf52504a94606f0a4681381c537df13.serveo.net';
+const BACKEND_URL = 'https://56e111adba6b6a91e60888443ade8386.serveo.net';
 
 const saveTelegramUser = async (initData: string) => {
   console.log('Attempting to save user data:');
