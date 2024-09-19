@@ -19,7 +19,7 @@ declare global {
     Telegram?: {
       WebApp?: {
         initDataUnsafe?: {
-          start_param?: string;
+          startParam?: string;
           user?: {
             id: number;
             first_name: string;
@@ -37,7 +37,7 @@ declare global {
 }
 
 const utils = initUtils();
-const BACKEND_URL = 'https://56e111adba6b6a91e60888443ade8386.serveo.net';
+const BACKEND_URL = 'https://c331ae4fb852b2a6b9b4ba1ca55d1099.serveo.net';
 const BOT_USERNAME = 'testonefornew_bot';
 
 export const FriendsPage: FC = () => {
@@ -45,7 +45,20 @@ export const FriendsPage: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const lp = useLaunchParams();
+  
+  // Получаем startParam
+  const startParam: string | null = lp.initData?.startParam || window.Telegram?.WebApp?.initDataUnsafe?.startParam || null;
 
+  useEffect(() => {
+    // Проверяем и используем startParam
+    if (startParam) {
+      console.log('Start parameter found:', startParam);
+      // Можно добавить логику для отправки startParam на сервер или использования его в бизнес-логике
+    } else {
+      console.log('No start parameter');
+    }
+  }, [startParam]);
+  
   const showPopup = useCallback((title: string, message: string) => {
     if (window.Telegram?.WebApp?.showPopup) {
       window.Telegram.WebApp.showPopup({
@@ -68,7 +81,12 @@ export const FriendsPage: FC = () => {
         throw new Error('JWT token not found');
       }
 
-      const response = await axios.get<Referral[]>(`${BACKEND_URL}/users/${lp.initData?.user?.id}/referrals`, {
+      const userId = lp.initData?.user?.id || window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      if (!userId) {
+        throw new Error('User ID not available');
+      }
+
+      const response = await axios.get<Referral[]>(`${BACKEND_URL}/users/${userId}/referrals`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -80,7 +98,6 @@ export const FriendsPage: FC = () => {
       console.error('Error fetching referrals:', err);
       if (axios.isAxiosError(err) && err.response?.status === 401) {
         setError('Authentication failed. Please log in again.');
-        // Here you might want to redirect to a login page or refresh the token
       } else {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
       }
@@ -95,7 +112,8 @@ export const FriendsPage: FC = () => {
   }, [fetchReferrals]);
 
   const generateInviteLink = useCallback(async () => {
-    if (!lp.initData?.user?.id) {
+    const userId = lp.initData?.user?.id || window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    if (!userId) {
       console.error('User ID not available');
       showPopup('Error', 'Unable to generate invite link. User ID not available.');
       return null;
@@ -108,7 +126,7 @@ export const FriendsPage: FC = () => {
       }
 
       const response = await axios.post<{ code: string }>(`${BACKEND_URL}/users/generate-referral-code`, 
-        { userId: lp.initData.user.id.toString() },
+        { userId: userId.toString() },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       const referralCode = response.data.code;

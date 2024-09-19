@@ -30,13 +30,13 @@ async function saveTelegramUser(initData: string) {
       const urlParams = new URLSearchParams(window.location.search);
       startParam = urlParams.get('startapp') || 
                    urlParams.get('start') ||
-                   window.Telegram?.WebApp?.initDataUnsafe?.start_param ||
+                   window.Telegram?.WebApp?.initDataUnsafe?.startParam ||
                    localStorage.getItem('pendingStartParam');
     }
     
     console.log('Final startParam:', startParam);
     
-    const response = await axios.post('https://56e111adba6b6a91e60888443ade8386.serveo.net/users/save-telegram-user', { 
+    const response = await axios.post('https://c331ae4fb852b2a6b9b4ba1ca55d1099.serveo.net/users/save-telegram-user', { 
       initData,
       startapp: startParam // Изменено с startParam на startapp
     });
